@@ -53,8 +53,10 @@ def main():
     if (args.Smearing).lower() == "on" and loc == "U1S":
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
         #This is the difference in the sd of simulated and real data with no smearing
-        sd_dif = 0.0055**2
-        mup_P,mum_P = mup_P*(1+np.random.normal(0,sd_dif)),mum_P*(1+np.random.normal(0,sd_dif))
+        sd_dif = np.sqrt(0.0455171**2 - 0.0400880351**2)
+        factor = 1+(np.random.normal(0,sd_dif,size=len(data["mup_PX"]))/1000)
+        mup_P *= factor
+        mum_P *= factor
         #This is just convinient for the file name
         smear = "_SmearingOn"
     elif loc =="U1S":
