@@ -12,13 +12,14 @@ def ResFit(x,total,mean,sd,A,B):
     return A*np.exp(-B*x) + total / (np.sqrt(2*np.pi)*sd) * np.exp(term) #+D
 
     #from scipy.stats documentation crystallball(x,beta,m): x = (x-mean)/sd
-def CrystalBallFit(x,beta,m,loc,scale):
-    return crystalball.pdf(x,beta,m,loc=loc,scale=scale)
+def CrystalBallFit(x,beta,m,loc,scale,A,B):
+    return crystalball.pdf(x,beta,m,loc=loc,scale=scale) + A*np.exp(-B*x)
 
 def main():
 
     parser = argparse.ArgumentParser(description='some string')
     parser.add_argument('--Source',default="d",type=str)
+    parser.add_argument('--Smearing',default="off",type=str)
     args = parser.parse_args()
     if (args.Source).lower() == "d" or (args.Source).lower() == "data":
         loc = "DATA"
@@ -44,6 +45,13 @@ def main():
     data["mum_P"] = data["mum_pt"]*np.cosh(data["mum_eta"])
 
     mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
+    if (args.Smearing).lower() == "on" and loc == "U1S":
+        mup_P,mum_P = mup_P*(1+np.random.normal(0,0.0055**2)),mum_P*(1+np.random.normal(0,0.55**2))
+        smear = "_SmearingOn"
+    elif loc =="U1S":
+        smear = "_SmearingOff"
+    else:
+        smear = ""
     mup_E,mum_E = np.sqrt(data["mup_P"]**2+MUON_MASS**2),np.sqrt(data["mum_P"]**2+MUON_MASS**2)
     tot_E = mup_E + mum_E
     tot_PX = mup_P[0] + mum_P[0]
@@ -59,20 +67,20 @@ def main():
     for i in range(1,(len(bins)-1)):
         binlist.append(binlist[-1]+binwidth)
     bincenters = np.array(binlist)
-    #d_y = np.sqrt(massHist)
+    
+    #Gaussian fit:
     #fitParam,_ = curve_fit(ResFit,bincenters,massHist,p0=[1.0, 9.46, 0.04, 0.5, 0.001],bounds=([0, 9.4, 0.018, 0, 0],[30.0, 9.5, 0.1, 10.0, 1e3]),maxfev=10000)
-    fitParam = (curve_fit(CrystalBallFit,bincenters,massHist,p0=[1.75,2.5,9.45,1e-3],bounds=([0,0,9.4,1e-5],[10,5,9.5,2]),maxfev=10000))[0]
-    print(fitParam)
     #model = ResFit(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
     #plt.plot(bincenters,model,label=r'$ Ae^{-bx}+\mathrm{Gauss}(T,\bar{x},\sigma) $')
-    model = CrystalBallFit(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3])
-    plt.plot(bincenters,model,label="Crystall Ball function")
-    
+    fitParam = (curve_fit(CrystalBallFit,bincenters,massHist,p0=[1.75,2.5,9.45,1e-3,0.0,0.0],bounds=([0.0,0.0,9.4,1e-5,0.0,0.0],[10.0,5.0,9.5,2.0,30.0,10.0]),maxfev=10000))[0]
+    print(fitParam)
+    model = CrystalBallFit(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5])
+    plt.plot(bincenters,model,label="Crystall Ball function\nWith Background")
     plt.legend()
     plt.xlabel("Mass / GeV")
     plt.ylabel("Frequency Density")
-    plt.title(f"Upsilon {loc} invariant mass")
-    plt.savefig(f"Upsilon_mass_{loc}.pdf")
+    plt.title(f"Reconstructed Upsilon {loc}, Smearing:{smear}")
+    plt.savefig(f"Upsilon_mass_{loc}{smear}.pdf")
     plt.clf()
 
 if __name__ == '__main__':
