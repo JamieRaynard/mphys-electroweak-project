@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 import argparse
 from scipy.stats import crystalball
-import json
+from json import dump
 
 #This is the Gaussian fit that I tried before the Crytall Ball, it is better at capturing the right tail
 def ResFit(x,total,mean,sd,A,B):
@@ -52,7 +52,6 @@ def Reconstruct(data):
 
 def PlotHistogram(mass,loc):
     massHist,bins,_ = plt.hist(mass,bins=100,range=(9.200,9.750),histtype='step',label="Upsilon mass",density=True)
-    
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -78,7 +77,31 @@ def PlotHistogram(mass,loc):
     plt.savefig(f"Upsilon_mass_{loc}.pdf")
     plt.clf()
 
-def main(fulloutput=False):
+    return CalcAlpha(fitParam[2],err[2])
+
+def Alpha(m,m_pdg):
+    return (m/m_pdg) - 1
+
+def CalcAlpha(m,m_err):
+    M_PDG = 9.46040
+    M_PDG_ERR = 0.00013
+    alph = Alpha(m,M_PDG)
+    err_m = Alpha(m+m_err,M_PDG) - alph
+    err_mpdg = Alpha(m,M_PDG+M_PDG_ERR) - alph
+    err_tot = np.sqrt(err_m**2+err_mpdg**2)
+    return (alph,err_tot)
+
+def c_ratio(alph_s,alph_d):
+    return (1+alph_s)/(1+alph_d)
+
+def CalcC(alpha_s,alpha_d):
+    c = c_ratio(alpha_s[0],alpha_d[0])
+    err_s = c_ratio(alpha_s[0]+alpha_s[1],alpha_d[0]) - c
+    err_d = c_ratio(alpha_s[0],alpha_d[0]+alpha_d[1]) - c
+    err_tot = np.sqrt(err_s**2+err_d**2)
+    return (c,err_tot)
+
+def main():
     #This allows for me to pass arguments in to the terminal to change important paramters without changing the code
     parser = argparse.ArgumentParser(description='some string')
     #Run with --Source="s" to switch to simulation
@@ -94,7 +117,8 @@ def main(fulloutput=False):
     else:
         print("Invalid source given")
         return 1
-
+    if (args.FullOutput).lower() == "true":
+        loc = "U1S"
     data = GetBranches(loc)
     
     '''#For now I have removed this as we are focussing more on the mean measurement not the width
@@ -114,7 +138,24 @@ def main(fulloutput=False):
     '''
     
     mass = Reconstruct(data)
-    PlotHistogram(mass,loc)
+
+    #This is a tuple of format (value,uncertainty)
+    alpha = PlotHistogram(mass,loc)
+
+    if (args.FullOutput).lower() == "true":
+        alpha_s = alpha
+        data = GetBranches("DATA")
+        mass = Reconstruct(data)
+        alpha_d = PlotHistogram(mass,"DATA")
+        c = CalcC(alpha_s,alpha_d)
+        output = {
+            "C_ratio": c
+            }
+        with open("C_ratio.json","w") as OutputFile:
+            dump(output,OutputFile,indent=2)
+    return 0
+
+        
 
 if __name__ == '__main__':
     main()
