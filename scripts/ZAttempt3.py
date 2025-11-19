@@ -84,6 +84,25 @@ def Zdata_with_fit(tmass,simdatam,datam):
     plt.savefig("Z-data with fit.pdf")
     plt.clf()
 
+def mikasuggestions(tmass,simdatam,datam):
+    dataHist,databinn=np.histogram(conaeq(datam), bins=np.linspace(80.0,100.0,50))
+    simHist,databinn=np.histogram(conaeq(simdatam), bins=np.linspace(80.0,100.0,50))
+    chi90=np.sum(((dataHist- simHist)**2)/dataHist)
+    print(chi90)
+
+    centers=0.5*(databinn[1:]+databinn[:-1])
+    sim_scale_factor = np.sum(dataHist) / np.sum(simHist) 
+    simHist_scaled = simHist * sim_scale_factor
+    dataHist,databinn,_d=plt.hist(conaeq(datam), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1)
+    plt.step(centers, simHist_scaled, where='mid', label="Z-sim scaled")
+    plt.title("Z-data with scale sim")
+    plt.xlabel("Mass_Gev")
+    plt.ylabel("Frequency")
+    plt.legend(loc='upper right')
+    plt.savefig("Z-data-sim_scale.pdf")
+    plt.clf()
+
+
 def plot(tmass,simdatam,datam):
     dataHist,databinn,_d=plt.hist(conaeq(datam), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
     trmassHist,binn,_t=plt.hist(tmass, bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-true",density=True,linewidth=1) #for true mass
@@ -92,29 +111,32 @@ def plot(tmass,simdatam,datam):
     m=91.1876
     fitParam,_tt = curve_fit(fiteq,centers,trmassHist,p0=[5,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,1]),maxfev=10000)# this uses the true mass
     print(fitParam)
-    model = fiteq(centers,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    
     # ratio only has the t mass in it, the hsitogram suses this wieghtign witht the recosntructed in it
     #scaling the hisogram
 
 
     ratio90=fiteq(tmass,fitParam[0],fitParam[1],90,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
-     #for reconstructed sim mass with wieght
     simmassHistweights90,binnweights90 = np.histogram(conaeq(simdatam), bins=np.linspace(80.0,100.0,50), weights=ratio90)
+
     ratio91=fiteq(tmass,fitParam[0],fitParam[1],91,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
     simmassHistweights91,binnweights91 = np.histogram(conaeq(simdatam), bins=np.linspace(80.0,100.0,50), weights=ratio91)
 
     ratio92=fiteq(tmass,fitParam[0],fitParam[1],92,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
     simmassHistweights92,binnweights92 = np.histogram(conaeq(simdatam), bins=np.linspace(80.0,100.0,50), weights=ratio92)
-
-    sim_scale_factor90 = np.sum(dataHist) / np.sum(simmassHistweights90) 
+    sim_scale_factor90= np.sum(dataHist) / np.sum(simmassHistweights90)
     simHist_scaled90 = simmassHistweights90 * sim_scale_factor90
+    
     sim_scale_factor91= np.sum(dataHist) / np.sum(simmassHistweights91) 
     simHist_scaled91 = simmassHistweights91 * sim_scale_factor91
+
     sim_scale_factor92 = np.sum(dataHist) / np.sum(simmassHistweights92) 
     simHist_scaled92 = simmassHistweights92 * sim_scale_factor92
+
     plt.plot(centers, simHist_scaled90, '-', linewidth=2, label='scaled-weighted 90 simulation')
     plt.plot(centers, simHist_scaled91, '-', linewidth=2, label='scaled-weighted 91 simulation')
     plt.plot(centers, simHist_scaled92, '-', linewidth=2, label='scaled-weighted 92 simulation')
+
     plt.title("Z-reconstucted weighted sim")
     plt.xlabel("Mass_Gev")
     plt.ylabel("Frequency Density")
@@ -126,6 +148,7 @@ def plot(tmass,simdatam,datam):
     chi90=np.sum(((dataHist-simHist_scaled90)**2)/dataHist)
     chi91=np.sum(((dataHist-simHist_scaled91)**2)/dataHist)
     chi92=np.sum(((dataHist-simHist_scaled92)**2)/dataHist)
+
     plt.title("Z-chi")
     y=np.array([chi90,chi91,chi92])
     print(y)
@@ -140,13 +163,21 @@ def plot(tmass,simdatam,datam):
     xx = np.linspace((89), (93), 300)
     plt.plot(xx,functionpfit(xx))
     plt.savefig("z-chi.pdf")
-    min=-qfit[1]/(2*qfit[0])
-    print("min at", min)
-    plt.clf()
 
+    min=-qfit[1]/(2*qfit[0])
+    f=qfit[0]*min**2+qfit[1]*min+qfit[2]
+    print("min ch^2 is",f)
+    print("mz mass is", min)
+    xerror_p=(-qfit[1]+np.sqrt(qfit[1]**2 -4*qfit[0]*(qfit[2]-1-f)))/(2*qfit[0])
+    xerror_n=(-qfit[1]-np.sqrt(qfit[1]**2 -4*qfit[0]*(qfit[2]-1-f)))/(2*qfit[0])
+    #print(xerror_p)
+    #print(xerror_n)
+    #print(min-xerror_p,min-xerror_n)
+    print("the mass error is",min-xerror_n)
     plt.figure()
 
 
 plot(tmass,simdatam,datam)
-TrueZfit_allplots(tmass,simdatam,datam)
-Zdata_with_fit(tmass,simdatam,datam)
+#TrueZfit_allplots(tmass,simdatam,datam)
+#Zdata_with_fit(tmass,simdatam,datam)
+#mikasuggestions(tmass,simdatam,datam)
