@@ -15,9 +15,14 @@ parser = argparse.ArgumentParser(description='some string')
 parser.add_argument('--Callibration',default="FALSE",type=str)
 args = parser.parse_args()
 if (args.Callibration).lower() == "true":
-    with open("C_ratio.json",) as InputFile:
-        C_rat,C_err =  load(InputFile)["C_ratio"]
-    print(f'Woo we imported {C_rat} ± {C_err}')
+    try:
+        with open("C_ratio.json",) as InputFile:
+            C_rat,C_err =  load(InputFile)["C_ratio"]
+        print(f'Woo we imported {C_rat} ± {C_err}')
+    except FileNotFoundError:
+        print("Please run the script Upsilon.py first to get a calibration value")
+        #This is where I would return to stop the script if we were inside a main func to avoid error
+        C_rat,C_err = 1,0
 else:
     C_rat = 1
     C_err = 0
