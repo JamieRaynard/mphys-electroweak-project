@@ -133,6 +133,7 @@ def main():
     parser.add_argument('--Source',default="s",type=str)
     #Run with --Smearing="on" to smear the momentum; will only work for simulation
     parser.add_argument('--Smearing',default="off",type=str)
+    parser.add_argument('--Calibration',default="off",type=str)
     parser.add_argument('--FullOutput',default="FALSE",type=str)
     args = parser.parse_args()
 
@@ -143,26 +144,26 @@ def main():
     else:
         print("Invalid source given")
         return 1
-    if (args.FullOutput).lower() == "true":
+    if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on":
         loc = "U1S"
 
     data = GetBranches(loc)
+    output = {}
     
     mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
     mup_E,mum_E = np.sqrt(data["mup_P"]**2+MUON_MASS**2),np.sqrt(data["mum_P"]**2+MUON_MASS**2)
     
-    if (args.Smearing).lower() == "on" and loc == "U1S": #(This is not the default case)
+    if ((args.Smearing).lower() == "on" and loc == "U1S") or (args.FullOutput).lower() == "true":
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
-
         sigma = CalcSmearFactor()
         print(f'WOOO got a scale variable: {sigma}')
         sd_dif = np.sqrt(0.0455171**2 - 0.0400880351**2)
         factor = 1+(np.random.normal(0,sd_dif,size=len(mum_E)))*sigma
         mup_P *= factor
         mum_P *= factor
-    
         #This is just convinient for the file name
         smear = "_SmearingOn"
+        output["Smear_factor"] = sigma
     elif loc =="U1S":
         smear = "_SmearingOff"
     else:
@@ -170,20 +171,19 @@ def main():
     
     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
 
-    if (args.FullOutput).lower() == "true":
+    if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on":
         #This is a tuple of format (value,uncertainty)
         alpha_s = PlotHistogram(mass,loc,Output="alpha")
         data = GetBranches("DATA")
         mass = Reconstruct(data)
         alpha_d = PlotHistogram(mass,"DATA",Output="alpha",smear=smear)
         c = CalcC(alpha_s,alpha_d)
-        output = {
-            "C_ratio": c
-            }
-        with open("C_ratio.json","w") as OutputFile:
-            dump(output,OutputFile,indent=2)
+        output["C_ratio"] =  c
     else:
         PlotHistogram(mass,loc,smear=smear)
+
+    with open("Calibration_output.json","w") as OutputFile:
+            dump(output,OutputFile,indent=2)
 
     return 0
 
