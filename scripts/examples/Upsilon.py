@@ -28,6 +28,7 @@ def GetBranches(loc):
 
 def ConvertCoords(data):
     #File no longer contains px,py,pz but pt,eta,phi so needs to convert to reconstruct the mass
+    #REMEMBER THESE ARE IN GEV!!
     data["mup_PX"] = data["mup_pt"]*np.cos(data["mup_phi"])
     data["mup_PY"] = data["mup_pt"]*np.sin(data["mup_phi"])
     data["mup_PZ"] = data["mup_pt"]*np.sinh(data["mup_eta"])
@@ -44,10 +45,12 @@ def Reconstruct(mup_P,mum_P,mup_E,mum_E):
     tot_PY = mup_P[1] + mum_P[1]
     tot_PZ = mup_P[2] + mum_P[2]
     tot_P = np.sqrt(tot_PX**2+tot_PY**2+tot_PZ**2)
-    mass = np.sqrt(tot_E**2 - tot_P**2)
+    mass_sq = np.maximum(tot_E**2 - tot_P**2,0)
+    mass = np.sqrt(mass_sq)
     return mass
 
-def PlotHistogram(mass,loc,Output=None,smear=""):
+#loc and smear are just variables to determine the file name the graph will be saved under
+def PlotHistogram(mass,loc,smear="",Output=None):
     massHist,bins,_ = plt.hist(mass,bins=100,range=(9.200,9.750),histtype='step',label="Upsilon mass",density=True)
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
@@ -71,7 +74,7 @@ def PlotHistogram(mass,loc,Output=None,smear=""):
     plt.xlabel("Mass / GeV")
     plt.ylabel("Frequency Density")
     plt.title(f"Reconstructed Upsilon {loc} {smear}")
-    plt.savefig(f"Upsilon_mass_{loc}{smear}.pdf")
+    plt.savefig(f"transient/Upsilon_mass_{loc}{smear}.pdf")
     plt.clf()
 
     if Output == "alpha":
