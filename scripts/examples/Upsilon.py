@@ -20,11 +20,14 @@ def CrystalBallFit(x,beta,m,loc,scale,A,B):
     return crystalball.pdf(x,beta,m,loc=loc,scale=scale) + A*np.exp(-B*x)
 
 def GetBranches(loc):
+    MUON_MASS = 0.1057
     DATADIR="/storage/epp2/phshgg/Public/MPhysProject_2025_2026/tuples/0/"
     with uproot.open(f"{DATADIR}/DecayTree__U1S__{loc}__d13600GeV_24c4.root:DecayTree") as t:
         Rawdata = t.arrays(["mup_pt","mup_eta","mup_phi","mum_pt","mum_eta","mum_phi"],library="np")
     data = ConvertCoords(Rawdata)
-    return data
+    mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
+    mup_E,mum_E = np.sqrt(data["mup_P"]**2+MUON_MASS**2),np.sqrt(data["mum_P"]**2+MUON_MASS**2)
+    return mup_P,mum_P,mup_E,mum_E
 
 def ConvertCoords(data):
     #File no longer contains px,py,pz but pt,eta,phi so needs to convert to reconstruct the mass
@@ -107,8 +110,8 @@ def CalcC(alpha_s,alpha_d):
     return (c,err_tot)
 
 def width_chi2(sigma,width_data,width_data_err,mup_P_orig,mum_P_orig,mup_E,mum_E):
-    sd_dif = np.sqrt(0.0455171**2 - 0.0400880351**2)
-    factor = 1+(np.random.normal(0,sd_dif,size=len(mum_E)))*sigma
+    global Norm_rand
+    factor = 1+Norm_rand*sigma
     mup_P = mup_P_orig*factor
     mum_P = mum_P_orig*factor
     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
@@ -116,17 +119,14 @@ def width_chi2(sigma,width_data,width_data_err,mup_P_orig,mum_P_orig,mup_E,mum_E
     return (width_sim[0] - width_data)**2 / width_data_err**2
 
 def CalcSmearFactor():
-    MUON_MASS = 0.1057
-    data = GetBranches("DATA")
-    mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
-    mup_E,mum_E = np.sqrt(data["mup_P"]**2+MUON_MASS**2),np.sqrt(data["mum_P"]**2+MUON_MASS**2)
+    mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     width = PlotHistogram(mass,"DATA",Output="width")
+    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
     best_sigma = minimize_scalar(width_chi2,args=(width[0],width[1],mup_P,mum_P,mup_E,mum_E),bounds=(0.0,0.1),method="bounded")
     return best_sigma.x
 
 def main():
-    MUON_MASS = 0.1057
     #This allows for me to pass arguments in to the terminal to change important paramters without changing the code
     parser = argparse.ArgumentParser(description='some string')
     #Run with --Source="s" to switch to simulation
@@ -147,18 +147,18 @@ def main():
     if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on":
         loc = "U1S"
 
-    data = GetBranches(loc)
+    mup_P,mum_P,mup_E,mum_E = GetBranches(loc)
     output = {}
-    
-    mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
-    mup_E,mum_E = np.sqrt(data["mup_P"]**2+MUON_MASS**2),np.sqrt(data["mum_P"]**2+MUON_MASS**2)
     
     if ((args.Smearing).lower() == "on" and loc == "U1S") or (args.FullOutput).lower() == "true":
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
+        rng = np.random.default_rng(seed=10)
+        sd_dif = np.sqrt(0.0455171**2 - 0.0400880351**2)
+        global Norm_rand
+        Norm_rand = (rng.normal(0,sd_dif,size=len(mum_E)))
         sigma = CalcSmearFactor()
         print(f'WOOO got a scale variable: {sigma}')
-        sd_dif = np.sqrt(0.0455171**2 - 0.0400880351**2)
-        factor = 1+(np.random.normal(0,sd_dif,size=len(mum_E)))*sigma
+        factor = 1+Norm_rand*sigma
         mup_P *= factor
         mum_P *= factor
         #This is just convinient for the file name
@@ -174,9 +174,7 @@ def main():
     if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on":
         #This is a tuple of format (value,uncertainty)
         alpha_s = PlotHistogram(mass,loc,Output="alpha")
-        data = GetBranches("DATA")
-        mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
-        mup_E,mum_E = np.sqrt(data["mup_P"]**2+MUON_MASS**2),np.sqrt(data["mum_P"]**2+MUON_MASS**2)
+        mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
         mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
         alpha_d = PlotHistogram(mass,"DATA",Output="alpha",smear=smear)
         c = CalcC(alpha_s,alpha_d)
