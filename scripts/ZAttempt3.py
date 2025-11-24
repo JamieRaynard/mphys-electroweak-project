@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 from scipy.optimize import curve_fit
-from json import load
+from json import load,dump
 import argparse
 
 #where is the main function? :(
@@ -307,3 +307,13 @@ def Zpaper_plot(tmass,simdatam,datam):
 #Zdata_with_fit(tmass,simdatam,datam)
 #mikasuggestions(tmass,simdatam,datam)
 Zpaper_plot(tmass,simdatam,datam)
+
+'''
+output = {
+    "Chi_sq":"placeholder",
+    "Z_mass": "placeholder",
+    "Z_err": "placeholder"
+    }
+with open(f'Z_result_calibration_{args.Calibration}.json',"w") as OutputFile:
+    dump(output,OutputFile,indent=2)
+''' #Delete ''' to use this to output result to a json file
