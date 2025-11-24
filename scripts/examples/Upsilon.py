@@ -175,7 +175,9 @@ def main():
         #This is a tuple of format (value,uncertainty)
         alpha_s = PlotHistogram(mass,loc,Output="alpha")
         data = GetBranches("DATA")
-        mass = Reconstruct(data)
+        mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
+        mup_E,mum_E = np.sqrt(data["mup_P"]**2+MUON_MASS**2),np.sqrt(data["mum_P"]**2+MUON_MASS**2)
+        mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
         alpha_d = PlotHistogram(mass,"DATA",Output="alpha",smear=smear)
         c = CalcC(alpha_s,alpha_d)
         output["C_ratio"] =  c
