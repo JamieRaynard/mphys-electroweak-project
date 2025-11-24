@@ -4,8 +4,29 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 from scipy.optimize import curve_fit
-from json import load
-#I forgot the filename, will update you later
+from json import load,dump
+import argparse
+
+#where is the main function? :(
+
+#This allows for me to pass arguments in to the terminal to change important paramters without changing the code
+parser = argparse.ArgumentParser(description='some string')
+#Run with --Callibration="TRUE" to use callibration
+parser.add_argument('--Calibration',default="FALSE",type=str)
+args = parser.parse_args()
+if (args.Calibration).lower() == "true":
+    try:
+        with open("C_ratio.json",) as InputFile:
+            C_rat,C_err =  load(InputFile)["C_ratio"]
+        print(f'Woo we imported {C_rat} ± {C_err}')
+    except FileNotFoundError:
+        print("Please run the script Upsilon.py first to get a calibration value")
+        #This is where I would return to stop the script if we were inside a main func to avoid error
+        C_rat,C_err = 1,0
+else:
+    C_rat = 1
+    C_err = 0
+
 
 DATAIR="/storage/epp2/phshgg/Public/MPhysProject_2025_2026/tuples/1/"
 with uproot.open(f"{DATAIR}/DecayTree__Z__Z__d13600GeV_24c4.root:DecayTree") as t:
@@ -286,3 +307,13 @@ def Zpaper_plot(tmass,simdatam,datam):
 #Zdata_with_fit(tmass,simdatam,datam)
 #mikasuggestions(tmass,simdatam,datam)
 Zpaper_plot(tmass,simdatam,datam)
+
+'''
+output = {
+    "Chi_sq":"placeholder",
+    "Z_mass": "placeholder",
+    "Z_err": "placeholder"
+    }
+with open(f'Z_result_calibration_{args.Calibration}.json',"w") as OutputFile:
+    dump(output,OutputFile,indent=2)
+''' #Delete ''' to use this to output result to a json file
