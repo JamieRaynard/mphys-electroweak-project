@@ -43,19 +43,20 @@ with uproot.open(f"{DATAIR}/DecayTree__Z__DATA__d13600GeV_24c4.root:DecayTree") 
     datam=tt.arrays(["mum_eta","mum_phi","mum_pt","mup_eta" ,"mup_phi" ,"mup_pt"],library="np")
 
 
-def conaeq(reconmass):
+def conaeq(reconmass,cal):
     mpe=reconmass["mup_eta"]
     mppt=reconmass["mup_pt"] 
     mpphi=reconmass["mup_phi"] 
     mme=reconmass["mum_eta"] 
     mmpt=reconmass["mum_pt"] 
     mmphi=reconmass["mum_phi"]
-    mpx=mppt*np.cos(mpphi)
-    mmx=mmpt*np.cos(mmphi)
-    mpy=mppt*np.sin(mpphi)
-    mmy=mmpt*np.sin(mmphi)
-    mpz=mppt*np.sinh(mpe)
-    mmz=mmpt*np.sinh(mme)
+    # calibration being applied here
+    mpx=mppt*np.cos(mpphi)*cal
+    mmx=mmpt*np.cos(mmphi)*cal
+    mpy=mppt*np.sin(mpphi)*cal
+    mmy=mmpt*np.sin(mmphi)*cal
+    mpz=mppt*np.sinh(mpe)*cal
+    mmz=mmpt*np.sinh(mme)*cal
 
     m=[]
     Ep=[]
@@ -127,27 +128,27 @@ def mikasuggestions(tmass,simdatam,datam):
     plt.clf()
 
 
-def plot(tmass,simdatam,datam):
-    dataHist,databinn,_d=plt.hist(conaeq(datam), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
+def plotmass(tmass,simdatam,datam,calibrate,err):
+    c=calibrate #error in calibration
+    dataHist,databinn,_d=plt.hist(conaeq(datam,1), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
     trmassHist,binn,_t=plt.hist(tmass, bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-true",density=True,linewidth=1) #for true mass
     centers=0.5*(binn[1:]+binn[:-1])
     w=3
     m=91.1876
     fitParam,_tt = curve_fit(fiteq,centers,trmassHist,p0=[5,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,1]),maxfev=10000)# this uses the true mass
-    print(fitParam)
+    #print(fitParam)
     
     # ratio only has the t mass in it, the hsitogram suses this wieghtign witht the recosntructed in it
     #scaling the hisogram
 
-
     ratio905=fiteq(tmass,fitParam[0],fitParam[1],90.5,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
-    simmassHistweights905,binnweights905 = np.histogram(conaeq(simdatam), bins=np.linspace(80.0,100.0,50), weights=ratio905)
+    simmassHistweights905,binnweights905 = np.histogram(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), weights=ratio905)
 
     ratio91=fiteq(tmass,fitParam[0],fitParam[1],91,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
-    simmassHistweights91,binnweights91 = np.histogram(conaeq(simdatam), bins=np.linspace(80.0,100.0,50), weights=ratio91)
+    simmassHistweights91,binnweights91 = np.histogram(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), weights=ratio91)
 
     ratio915=fiteq(tmass,fitParam[0],fitParam[1],91.5,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
-    simmassHistweights915,binnweights915 = np.histogram(conaeq(simdatam), bins=np.linspace(80.0,100.0,50), weights=ratio915)
+    simmassHistweights915,binnweights915 = np.histogram(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), weights=ratio915)
     sim_scale_factor905= np.sum(dataHist) / np.sum(simmassHistweights905)
     simHist_scaled905 = simmassHistweights905 * sim_scale_factor905
     
@@ -160,12 +161,11 @@ def plot(tmass,simdatam,datam):
     plt.plot(centers, simHist_scaled905, '-', linewidth=2, label='scaled-weighted 90.5 simulation')
     plt.plot(centers, simHist_scaled91, '-', linewidth=2, label='scaled-weighted 91 simulation')
     plt.plot(centers, simHist_scaled915, '-', linewidth=2, label='scaled-weighted 91.5 simulation')
-
-    plt.title("Z-reconstucted weighted sim")
+    plt.title(f"Zreconstructed weight sim ({'real' if err==True else 'dont-use'})")
     plt.xlabel("Mass_Gev")
     plt.ylabel("Frequency Density")
     plt.legend(loc='upper right')
-    plt.savefig("weights graph.pdf")
+    plt.savefig(f"Zreconstructed weight sim ({'real' if err==False else 'dont-use'}).pdf")
     plt.clf()
     plt.figure() # now for the chi ^2 plot of from the last 3  // now this will ahve to be recosntucted daat from real life not sim
 
@@ -175,7 +175,7 @@ def plot(tmass,simdatam,datam):
 
     plt.title("Z-chi")
     y=np.array([chi905,chi91,chi915])
-    print(y)
+    #print(y)
     x=np.array([90.5,91,91.5])
     plt.xlabel("target Zmass")
     plt.ylabel("Chi^2")
@@ -183,25 +183,31 @@ def plot(tmass,simdatam,datam):
     plt.scatter(x,y)
     qfit = np.polyfit(x, y, deg=2)
     functionpfit = np.poly1d(qfit) 
-    print(qfit)
-    xx = np.linspace((90), (92), 300)
+    #print(qfit)
+    xx = np.linspace((90.25), (91.75), 300)
     plt.plot(xx,functionpfit(xx))
-    plt.savefig("z-chi.pdf")
+    plt.savefig(f"Z-chi({'real' if err==False else 'dont-use'}).pdf")
 
     min=-qfit[1]/(2*qfit[0])
     f=qfit[0]*min**2+qfit[1]*min+qfit[2]
-    print("min ch^2 is",f)
-    print("mz mass is", min)
-    xerror_p=(-qfit[1]+np.sqrt(qfit[1]**2 -4*qfit[0]*(qfit[2]-1-f)))/(2*qfit[0])
-    xerror_n=(-qfit[1]-np.sqrt(qfit[1]**2 -4*qfit[0]*(qfit[2]-1-f)))/(2*qfit[0])
+    if err== False:   # if it is calibration with 0 error to get the values of mass
+        print(fitParam)
+        print(y)
+        print(qfit)
+        print("min ch^2 is",f)
+        print("mz mass is", min)
+        xerror_p=(-qfit[1]+np.sqrt(qfit[1]**2 -4*qfit[0]*(qfit[2]-1-f)))/(2*qfit[0])
+        xerror_n=(-qfit[1]-np.sqrt(qfit[1]**2 -4*qfit[0]*(qfit[2]-1-f)))/(2*qfit[0])
     #print(xerror_p)
     #print(xerror_n)
     #print(min-xerror_p,min-xerror_n)
-    print("the mass error is",min-xerror_n)
+        print("the mass error is",min-xerror_n)
     plt.figure()
+    return min
 
-def Zpaper_plot(tmass,simdatam,datam):
-    dataHist,databinn,_d=plt.hist(conaeq(datam), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
+def Zstack_plot(tmass,simdatam,datam):
+    c=C_rat #error in calibration
+    dataHist,databinn,_d=plt.hist(conaeq(datam,1), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
     trmassHist,binn,_t=plt.hist(tmass, bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-true",density=True,linewidth=1) #for true mass
     centers=0.5*(binn[1:]+binn[:-1])
     w=3
@@ -211,16 +217,16 @@ def Zpaper_plot(tmass,simdatam,datam):
     
     # ratio only has the t mass in it, the hsitogram suses this wieghtign witht the recosntructed in it
     #scaling the hisogram
-
+    
 
     ratio905=fiteq(tmass,fitParam[0],fitParam[1],90.5,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
-    simmassHistweights905,binnweights905 = np.histogram(conaeq(simdatam), bins=np.linspace(80.0,100.0,50), weights=ratio905)
+    simmassHistweights905,binnweights905 = np.histogram(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), weights=ratio905)
 
     ratio91=fiteq(tmass,fitParam[0],fitParam[1],91,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
-    simmassHistweights91,binnweights91 = np.histogram(conaeq(simdatam), bins=np.linspace(80.0,100.0,50), weights=ratio91)
+    simmassHistweights91,binnweights91 = np.histogram(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), weights=ratio91)
 
     ratio915=fiteq(tmass,fitParam[0],fitParam[1],91.5,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
-    simmassHistweights915,binnweights915 = np.histogram(conaeq(simdatam), bins=np.linspace(80.0,100.0,50), weights=ratio915)
+    simmassHistweights915,binnweights915 = np.histogram(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), weights=ratio915)
     sim_scale_factor905= np.sum(dataHist) / np.sum(simmassHistweights905)
     simHist_scaled905 = simmassHistweights905 * sim_scale_factor905
     
@@ -298,16 +304,96 @@ def Zpaper_plot(tmass,simdatam,datam):
     #plt.tight_layout()
     plt.show()
 
+def Widthchi(tmass,simdatam,datam,calibrate,err):
+    c=calibrate #error in calibration
+    dataHist,databinn,_d=plt.hist(conaeq(datam,1), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
+    trmassHist,binn,_t=plt.hist(tmass, bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-true",density=True,linewidth=1) #for true mass
+    centers=0.5*(binn[1:]+binn[:-1])
+    w=3
+    m=91.1876
+    fitParam,_tt = curve_fit(fiteq,centers,trmassHist,p0=[5,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,1]),maxfev=10000)# this uses the true mass
+    #print(fitParam)
     
-
+    # ratio only has the t mass in it, the hsitogram suses this wieghtign witht the recosntructed in it
+    #scaling the hisogram
     
+    
+    ratio249=fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],1,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    simmassHistweights249,binnweights249 = np.histogram(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), weights=ratio249)
 
-#plot(tmass,simdatam,datam)
+    ratio250=fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],2,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    simmassHistweights250,binnweights250 = np.histogram(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), weights=ratio250)
+
+    ratio251=fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],3,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    simmassHistweights251,binnweights251 = np.histogram(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), weights=ratio251)
+
+    sim_scale_factor249= np.sum(dataHist) / np.sum(simmassHistweights249)
+    simHist_scaled249 = simmassHistweights249 * sim_scale_factor249
+    
+    sim_scale_factor250= np.sum(dataHist) / np.sum(simmassHistweights250) 
+    simHist_scaled250 = simmassHistweights250 * sim_scale_factor250
+
+    sim_scale_factor251= np.sum(dataHist) / np.sum(simmassHistweights251) 
+    simHist_scaled251 = simmassHistweights251 * sim_scale_factor251
+
+    plt.plot(centers, simHist_scaled249, '-', linewidth=2, label='scaled-weighted 2.4 simulation')
+    plt.plot(centers, simHist_scaled250, '-', linewidth=2, label='scaled-weighted 2.50 simulation')
+    plt.plot(centers, simHist_scaled251, '-', linewidth=2, label='scaled-weighted 2.6 simulation')
+    plt.title(f"Zreconstructed width sim ({'real' if err==True else 'dont-use'})")
+    plt.xlabel("Mass_Gev")
+    plt.ylabel("Frequency Density")
+    plt.legend(loc='upper right')
+    plt.savefig(f"Zreconstructed width sim ({'real' if err==False else 'dont-use'}).pdf")
+    plt.clf()
+    plt.figure() # now for the chi ^2 plot of from the last 3  // now this will ahve to be recosntucted daat from real life not sim
+
+    chi249=np.sum(((dataHist-simHist_scaled249)**2)/dataHist)
+    chi250=np.sum(((dataHist-simHist_scaled250)**2)/dataHist)
+    chi251=np.sum(((dataHist-simHist_scaled251)**2)/dataHist)
+    plt.title("Z-chi")
+    y=np.array([chi249,chi250,chi251])
+    #print(y)
+    x=np.array([1,2,3])
+    plt.xlabel("target width")
+    plt.ylabel("Chi^2")
+    plt.scatter(x,y)
+    qfit = np.polyfit(x, y, deg=2)
+    functionpfit = np.poly1d(qfit) 
+    #print(qfit)
+    xx = np.linspace((0.8), (3.2), 300)
+    plt.plot(xx,functionpfit(xx))
+    plt.savefig(f"Z-chi width({'real' if err==False else 'dont-use'}).pdf")
+
+    min=-qfit[1]/(2*qfit[0])
+    f=qfit[0]*min**2+qfit[1]*min+qfit[2]
+    if err== False:   # if it is calibration with 0 error to get the values of mass
+        print(fitParam)
+        print(y)
+        print(qfit)
+        print("min ch^2 is",f)
+        print("mz width is", min)
+        xerror_p=(-qfit[1]+np.sqrt(qfit[1]**2 -4*qfit[0]*(qfit[2]-1-f)))/(2*qfit[0])
+        xerror_n=(-qfit[1]-np.sqrt(qfit[1]**2 -4*qfit[0]*(qfit[2]-1-f)))/(2*qfit[0])
+    #print(xerror_p)
+    #print(xerror_n)
+    #print(min-xerror_p,min-xerror_n)
+        print("the width error is",min-xerror_n)
+    plt.figure()
+
+
+
 #TrueZfit_allplots(tmass,simdatam,datam)
 #Zdata_with_fit(tmass,simdatam,datam)
 #mikasuggestions(tmass,simdatam,datam)
-Zpaper_plot(tmass,simdatam,datam)
+#Zstack_plot(tmass,simdatam,datam)
+#e2=plotmass(tmass,simdatam,datam,C_rat+C_err,err=True) 
+#e1=plotmass(tmass,simdatam,datam,C_rat,err=False)
 
+    # for the error in mass cauesd by calibration ----------------------------------------------------------------------------------------------------------
+#2=plotmass(tmass,simdatam,datam,C_rat+C_err,err=True) 
+
+#print("the calibration uncertancy is ",np.sqrt((e1-e2)**2))
+Widthchi(tmass,simdatam,datam,C_rat,err=False)
 '''
 output = {
     "Chi_sq":"placeholder",
