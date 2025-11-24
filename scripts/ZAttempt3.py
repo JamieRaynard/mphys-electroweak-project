@@ -12,9 +12,9 @@ import argparse
 #This allows for me to pass arguments in to the terminal to change important paramters without changing the code
 parser = argparse.ArgumentParser(description='some string')
 #Run with --Callibration="TRUE" to use callibration
-parser.add_argument('--Callibration',default="FALSE",type=str)
+parser.add_argument('--Calibration',default="FALSE",type=str)
 args = parser.parse_args()
-if (args.Callibration).lower() == "true":
+if (args.Calibration).lower() == "true":
     try:
         with open("C_ratio.json",) as InputFile:
             C_rat,C_err =  load(InputFile)["C_ratio"]
