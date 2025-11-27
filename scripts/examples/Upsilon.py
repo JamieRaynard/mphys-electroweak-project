@@ -27,6 +27,7 @@ def GetBranches(loc):
     data = ConvertCoords(Rawdata)
     mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
     mup_E,mum_E = np.sqrt(data["mup_P"]**2+MUON_MASS**2),np.sqrt(data["mum_P"]**2+MUON_MASS**2)
+    #For now I am only using these 4 values
     return mup_P,mum_P,mup_E,mum_E
 
 def ConvertCoords(data):
@@ -80,9 +81,8 @@ def PlotHistogram(mass,filename,Output=None):
     plt.savefig(f"transient/Upsilon_mass{filename}.pdf")
     plt.clf()
 
-    if Output == "alpha":
-        return CalcAlpha(fitParam[2],err[2])
-    elif Output:
+    if Output:
+        #At the moment these are the only values I use but can add others (e.g. for A and B for background) easily here
         outputvalues = {
             "mass": (fitParam[2],err[2]),
             "width": (fitParam[3],err[3])
@@ -170,26 +170,28 @@ def main():
     if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on":
         loc = "U1S"
 
-    mup_P,mum_P,mup_E,mum_E = GetBranches(loc)
     output = {}
     filename=""
-    
+
+    mup_P,mum_P,mup_E,mum_E = GetBranches(loc)
+
     if ((args.Smearing).lower() == "on" and loc == "U1S") or (args.FullOutput).lower() == "true":
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
         rng = np.random.default_rng(seed=10)
+
         #Mininimising Chi2 approach (requires chaning CalcSmearFactor)
         #sd_dif = np.sqrt(0.0455171**2 - 0.0400880351**2)
         #global Norm_rand
         #Norm_rand = (rng.normal(0,sd_dif,size=len(mum_E)))
         #sigma = CalcSmearFactorByMinimise()
+
+        #Calculating directly approach
         sigma,sigma_err = CalcSmearFactor()
-        print(f'WOOO got a scale variable: {sigma}')
+        print(f'WOOO got a scale variable: {sigma} ± {sigma_err}')
         Norm_rand = rng.normal(0,sigma,size=len(mum_E))
         factor = 1+Norm_rand*sigma
-        print("before:",mup_P)
         mup_P *= factor
         mum_P *= factor
-        print("after",mup_P)
         #This is just convinient for the file name
         output["Smear_factor"] = (sigma,sigma_err)
         filename = filename+"_Smeared"
@@ -198,13 +200,14 @@ def main():
 
     if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on":
         #This is a tuple of format (value,uncertainty)
-        alpha_s = PlotHistogram(mass,"U1S_Uncalibrated",Output="alpha")
+        sim_results = PlotHistogram(mass,"U1S",Output=True)
+        alpha_s = CalcAlpha(sim_results["mass"][0],sim_results["mass"][1])
         mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
         mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-        alpha_d = PlotHistogram(mass,"DATA",Output="alpha")
+        data_results = PlotHistogram(mass,"DATA",Output=True)
+        alpha_d = CalcAlpha(data_results["mass"][0],data_results["mass"][1])
         c = CalcC(alpha_s,alpha_d)
         output["C_ratio"] =  c
-        filename = filename+"_Calibrated"
     else:
         PlotHistogram(mass,filename)
 
