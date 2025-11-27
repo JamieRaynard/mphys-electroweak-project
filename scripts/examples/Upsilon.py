@@ -3,7 +3,7 @@
 import uproot
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit,minimize_scalar
 import argparse
 from scipy.stats import crystalball
 from json import dump
@@ -20,14 +20,19 @@ def CrystalBallFit(x,beta,m,loc,scale,A,B):
     return crystalball.pdf(x,beta,m,loc=loc,scale=scale) + A*np.exp(-B*x)
 
 def GetBranches(loc):
+    MUON_MASS = 0.1057
     DATADIR="/storage/epp2/phshgg/Public/MPhysProject_2025_2026/tuples/0/"
     with uproot.open(f"{DATADIR}/DecayTree__U1S__{loc}__d13600GeV_24c4.root:DecayTree") as t:
         Rawdata = t.arrays(["mup_pt","mup_eta","mup_phi","mum_pt","mum_eta","mum_phi"],library="np")
     data = ConvertCoords(Rawdata)
-    return data
+    mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
+    mup_E,mum_E = np.sqrt(data["mup_P"]**2+MUON_MASS**2),np.sqrt(data["mum_P"]**2+MUON_MASS**2)
+    #For now I am only using these 4 values
+    return mup_P,mum_P,mup_E,mum_E
 
 def ConvertCoords(data):
     #File no longer contains px,py,pz but pt,eta,phi so needs to convert to reconstruct the mass
+    #REMEMBER THESE ARE IN GEV!!
     data["mup_PX"] = data["mup_pt"]*np.cos(data["mup_phi"])
     data["mup_PY"] = data["mup_pt"]*np.sin(data["mup_phi"])
     data["mup_PZ"] = data["mup_pt"]*np.sinh(data["mup_eta"])
@@ -38,19 +43,18 @@ def ConvertCoords(data):
     data["mum_P"] = data["mum_pt"]*np.cosh(data["mum_eta"])
     return data
 
-def Reconstruct(data):
-    MUON_MASS = 0.1057
-    mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
-    mup_E,mum_E = np.sqrt(data["mup_P"]**2+MUON_MASS**2),np.sqrt(data["mum_P"]**2+MUON_MASS**2)
+def Reconstruct(mup_P,mum_P,mup_E,mum_E):
     tot_E = mup_E + mum_E
     tot_PX = mup_P[0] + mum_P[0]
     tot_PY = mup_P[1] + mum_P[1]
     tot_PZ = mup_P[2] + mum_P[2]
     tot_P = np.sqrt(tot_PX**2+tot_PY**2+tot_PZ**2)
-    mass = np.sqrt(tot_E**2 - tot_P**2)
+    mass_sq = np.maximum(tot_E**2 - tot_P**2,0)
+    mass = np.sqrt(mass_sq)
     return mass
 
-def PlotHistogram(mass,loc):
+#loc and smear are just variables to determine the file name the graph will be saved under
+def PlotHistogram(mass,filename,Output=None):
     massHist,bins,_ = plt.hist(mass,bins=100,range=(9.200,9.750),histtype='step',label="Upsilon mass",density=True)
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
@@ -73,11 +77,19 @@ def PlotHistogram(mass,loc):
     plt.legend()
     plt.xlabel("Mass / GeV")
     plt.ylabel("Frequency Density")
-    plt.title(f"Reconstructed Upsilon {loc}")
-    plt.savefig(f"Upsilon_mass_{loc}.pdf")
+    plt.title(f"Reconstructed Upsilon {filename}")
+    plt.savefig(f"transient/Upsilon_mass{filename}.pdf")
     plt.clf()
 
-    return CalcAlpha(fitParam[2],err[2])
+    if Output:
+        #At the moment these are the only values I use but can add others (e.g. for A and B for background) easily here
+        outputvalues = {
+            "mass": (fitParam[2],err[2]),
+            "width": (fitParam[3],err[3])
+        }
+        return (outputvalues)
+    else:
+        return 0
 
 def Alpha(m,m_pdg):
     return (m/m_pdg) - 1
@@ -101,6 +113,42 @@ def CalcC(alpha_s,alpha_d):
     err_tot = np.sqrt(err_s**2+err_d**2)
     return (c,err_tot)
 
+def width_chi2(sigma,width_data,width_data_err,mup_P_orig,mum_P_orig,mup_E,mum_E):
+    global Norm_rand
+    factor = 1+Norm_rand*sigma
+    mup_P = mup_P_orig*factor
+    mum_P = mum_P_orig*factor
+    mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    width_sim = PlotHistogram(mass,"U1S",Output=True)["width"]
+    return (width_sim[0] - width_data)**2 / width_data_err**2
+
+def CalcSmearFactorByMinimise():
+    mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
+    mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    data_width = PlotHistogram(mass,"DATA",Output=True)["width"]
+    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
+    best_sigma = minimize_scalar(width_chi2,args=(data_width[0],data_width[1],mup_P,mum_P,mup_E,mum_E),bounds=(0.0,0.1),method="bounded")
+    return best_sigma.x
+
+def SmearFactor(sim_width,sim_mass,data_width,data_mass):
+    return np.sqrt((data_width/data_mass)**2-(sim_width/sim_mass)**2)
+
+def CalcSmearFactor():
+    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
+    sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    sim_results = PlotHistogram(sim_mass,"U1S",Output=True)
+    mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
+    data_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    data_results = PlotHistogram(data_mass,"DATA",Output=True)
+    print(f'Data width: {data_results["width"][0]} ± {data_results["width"][1]} \nUnsmeared sim width: {sim_results["width"][0]} ± {sim_results["width"][1]}')
+    sigma = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0])
+    err_due_sim_width = SmearFactor(sim_results["width"][0]+sim_results["width"][1],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0]) - sigma
+    err_due_sim_mass = SmearFactor(sim_results["width"][0],sim_results["mass"][0]+sim_results["mass"][1],data_results["width"][0],data_results["mass"][0]) - sigma
+    err_due_data_width = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0]+data_results["width"][1],data_results["mass"][0]) - sigma
+    err_due_data_mass = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0]+data_results["mass"][1]) - sigma
+    err_sigma = np.sqrt(err_due_sim_width**2+err_due_sim_mass**2+err_due_data_width**2+err_due_data_mass**2)
+    return (sigma,err_sigma)
+
 def main():
     #This allows for me to pass arguments in to the terminal to change important paramters without changing the code
     parser = argparse.ArgumentParser(description='some string')
@@ -108,8 +156,10 @@ def main():
     parser.add_argument('--Source',default="s",type=str)
     #Run with --Smearing="on" to smear the momentum; will only work for simulation
     parser.add_argument('--Smearing',default="off",type=str)
+    parser.add_argument('--Calibration',default="off",type=str)
     parser.add_argument('--FullOutput',default="FALSE",type=str)
     args = parser.parse_args()
+
     if (args.Source).lower() == "d" or (args.Source).lower() == "data":
         loc = "DATA"
     elif (args.Source).lower() == "s" or (args.Source).lower() =="sim":
@@ -117,42 +167,53 @@ def main():
     else:
         print("Invalid source given")
         return 1
-    if (args.FullOutput).lower() == "true":
+    if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on":
         loc = "U1S"
-    data = GetBranches(loc)
-    
-    '''#For now I have removed this as we are focussing more on the mean measurement not the width
-    if (args.Smearing).lower() == "on" and loc == "U1S": #(This is not the default case)
+
+    output = {}
+    filename=""
+
+    mup_P,mum_P,mup_E,mum_E = GetBranches(loc)
+
+    if ((args.Smearing).lower() == "on" and loc == "U1S") or (args.FullOutput).lower() == "true":
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
-        #This is the difference in the sd of simulated and real data with no smearing
-        sd_dif = np.sqrt(0.0455171**2 - 0.0400880351**2)
-        factor = 1+(np.random.normal(0,sd_dif,size=len(data["mup_PX"]))/1000)
+        rng = np.random.default_rng(seed=10)
+
+        #Mininimising Chi2 approach (requires chaning CalcSmearFactor)
+        #sd_dif = np.sqrt(0.0455171**2 - 0.0400880351**2)
+        #global Norm_rand
+        #Norm_rand = (rng.normal(0,sd_dif,size=len(mum_E)))
+        #sigma = CalcSmearFactorByMinimise()
+
+        #Calculating directly approach
+        sigma,sigma_err = CalcSmearFactor()
+        print(f'WOOO got a scale variable: {sigma} ± {sigma_err}')
+        Norm_rand = rng.normal(0,sigma,size=len(mum_E))
+        factor = 1+Norm_rand*sigma
         mup_P *= factor
         mum_P *= factor
         #This is just convinient for the file name
-        smear = "_SmearingOn"
-    elif loc =="U1S":
-        smear = "_SmearingOff"
-    else:
-        smear = ""
-    '''
+        output["Smear_factor"] = (sigma,sigma_err)
+        filename = filename+"_Smeared"
     
-    mass = Reconstruct(data)
+    mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
 
-    #This is a tuple of format (value,uncertainty)
-    alpha = PlotHistogram(mass,loc)
-
-    if (args.FullOutput).lower() == "true":
-        alpha_s = alpha
-        data = GetBranches("DATA")
-        mass = Reconstruct(data)
-        alpha_d = PlotHistogram(mass,"DATA")
+    if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on":
+        #This is a tuple of format (value,uncertainty)
+        sim_results = PlotHistogram(mass,"U1S",Output=True)
+        alpha_s = CalcAlpha(sim_results["mass"][0],sim_results["mass"][1])
+        mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
+        mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+        data_results = PlotHistogram(mass,"DATA",Output=True)
+        alpha_d = CalcAlpha(data_results["mass"][0],data_results["mass"][1])
         c = CalcC(alpha_s,alpha_d)
-        output = {
-            "C_ratio": c
-            }
-        with open("C_ratio.json","w") as OutputFile:
+        output["C_ratio"] =  c
+    else:
+        PlotHistogram(mass,filename)
+
+    with open("Calibration_output.json","w") as OutputFile:
             dump(output,OutputFile,indent=2)
+
     return 0
 
         
