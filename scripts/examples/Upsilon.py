@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit,minimize_scalar
 import argparse
 from scipy.stats import crystalball
-from json import dump
+from json import dump,load
 
 #This is the Gaussian fit that I tried before the Crytall Ball, it is better at capturing the right tail
 def ResFit(x,total,mean,sd,A,B):
@@ -74,11 +74,13 @@ def PlotHistogram(mass,filename,Output=None):
     model = CrystalBallFit(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5])
     plt.plot(bincenters,model,label="Crystall Ball function\nWith Background")
     
+    #print(f'Saving plot to transient/Upsilon_mass{filename}.pdf')
+
     plt.legend()
     plt.xlabel("Mass / GeV")
     plt.ylabel("Frequency Density")
     plt.title(f"Reconstructed Upsilon {filename}")
-    plt.savefig(f"transient/Upsilon_mass{filename}.pdf")
+    plt.savefig(f"transient/Upsilon_mass_{filename}.pdf")
     plt.clf()
 
     if Output:
@@ -90,6 +92,42 @@ def PlotHistogram(mass,filename,Output=None):
         return (outputvalues)
     else:
         return 0
+
+def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
+    data_massHist,bins,_ = plt.hist(data_mass,bins=100,range=(9.200,9.750),histtype='step',label="Data",density=True)
+    unscaled_sim_massHist,bins,_ = plt.hist(unscaled_sim_mass,bins=100,range=(9.200,9.750),histtype='step',label="Sim without scaling",density=True)
+    scaled_massHist,bins,_ = plt.hist(scaled_sim_mass,bins=100,range=(9.200,9.750),histtype='step',label="Sim with scaling",density=True)
+    plt.legend()
+    plt.xlabel("Mass / GeV")
+    plt.ylabel("Frequency Density")
+    plt.title(r"R = norm($\alpha$,$\sigma$), factor = CR")
+    plt.savefig(f"transient/Upsilon_mass_comparisson.pdf")
+    plt.clf()
+    return 0
+
+def Comparing():
+    try:
+        with open("Calibration_output.json",) as InputFile:
+            Calibration = load(InputFile)
+        c_ratio = Calibration["C_ratio"][0]
+        Smear_factor = Calibration["Smear_factor"][0]
+    except FileNotFoundError:
+        print('Please run the script with --FullOutput="TRUE" first to get calibration information')
+        return 1
+    except KeyError:
+        print('Please run the script with --FullOutput="TRUE" first to get all required calibration information')
+        return 1
+
+    mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
+    data_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
+    unscaled_sim_mass = Reconstruct(mup_P*c_ratio,mum_P*c_ratio,mup_E,mum_E)
+    rng = np.random.default_rng(seed=10)
+    Norm_rand = rng.normal(0,Smear_factor,size=len(mum_E))
+    factor = 1+Norm_rand*Smear_factor
+    scaled_sim_mass = Reconstruct(mup_P*factor,mum_P*factor,mup_E,mum_E)
+    CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass)
+    return 0
 
 def Alpha(m,m_pdg):
     return (m/m_pdg) - 1
@@ -158,7 +196,13 @@ def main():
     parser.add_argument('--Smearing',default="off",type=str)
     parser.add_argument('--Calibration',default="off",type=str)
     parser.add_argument('--FullOutput',default="FALSE",type=str)
+    #If you run compare, that overwrites all other arguments
+    parser.add_argument('--Compare',default="FALSE",type=str)
     args = parser.parse_args()
+
+    if (args.Compare).lower() == "true":
+        success = Comparing()
+        return success
 
     if (args.Source).lower() == "d" or (args.Source).lower() == "data":
         loc = "DATA"
@@ -171,11 +215,11 @@ def main():
         loc = "U1S"
 
     output = {}
-    filename=""
+    filename=loc
 
     mup_P,mum_P,mup_E,mum_E = GetBranches(loc)
 
-    if ((args.Smearing).lower() == "on" and loc == "U1S") or (args.FullOutput).lower() == "true":
+    if (((args.Smearing).lower() == "on"  or (args.Smearing).lower() == "true") and loc == "U1S") or (args.FullOutput).lower() == "true":
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
         rng = np.random.default_rng(seed=10)
 
@@ -198,7 +242,7 @@ def main():
     
     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
 
-    if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on":
+    if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on" or (args.Calibration).lower() == "true":
         #This is a tuple of format (value,uncertainty)
         sim_results = PlotHistogram(mass,"U1S",Output=True)
         alpha_s = CalcAlpha(sim_results["mass"][0],sim_results["mass"][1])
