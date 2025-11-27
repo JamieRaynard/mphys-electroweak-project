@@ -53,7 +53,7 @@ def Reconstruct(mup_P,mum_P,mup_E,mum_E):
     return mass
 
 #loc and smear are just variables to determine the file name the graph will be saved under
-def PlotHistogram(mass,loc,smear="",Output=None):
+def PlotHistogram(mass,filename,Output=None):
     massHist,bins,_ = plt.hist(mass,bins=100,range=(9.200,9.750),histtype='step',label="Upsilon mass",density=True)
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
@@ -76,14 +76,18 @@ def PlotHistogram(mass,loc,smear="",Output=None):
     plt.legend()
     plt.xlabel("Mass / GeV")
     plt.ylabel("Frequency Density")
-    plt.title(f"Reconstructed Upsilon {loc} {smear}")
-    plt.savefig(f"transient/Upsilon_mass_{loc}{smear}.pdf")
+    plt.title(f"Reconstructed Upsilon {filename}")
+    plt.savefig(f"transient/Upsilon_mass{filename}.pdf")
     plt.clf()
 
     if Output == "alpha":
         return CalcAlpha(fitParam[2],err[2])
-    elif Output == "width":
-        return (fitParam[3],err[3])
+    elif Output:
+        outputvalues = {
+            "mass": (fitParam[2],err[2]),
+            "width": (fitParam[3],err[3])
+        }
+        return (outputvalues)
     else:
         return 0
 
@@ -115,16 +119,35 @@ def width_chi2(sigma,width_data,width_data_err,mup_P_orig,mum_P_orig,mup_E,mum_E
     mup_P = mup_P_orig*factor
     mum_P = mum_P_orig*factor
     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    width_sim = PlotHistogram(mass,"U1S",Output="width")
+    width_sim = PlotHistogram(mass,"U1S",Output=True)["width"]
     return (width_sim[0] - width_data)**2 / width_data_err**2
 
-def CalcSmearFactor():
+def CalcSmearFactorByMinimise():
     mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    width = PlotHistogram(mass,"DATA",Output="width")
+    data_width = PlotHistogram(mass,"DATA",Output=True)["width"]
     mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
-    best_sigma = minimize_scalar(width_chi2,args=(width[0],width[1],mup_P,mum_P,mup_E,mum_E),bounds=(0.0,0.1),method="bounded")
+    best_sigma = minimize_scalar(width_chi2,args=(data_width[0],data_width[1],mup_P,mum_P,mup_E,mum_E),bounds=(0.0,0.1),method="bounded")
     return best_sigma.x
+
+def SmearFactor(sim_width,sim_mass,data_width,data_mass):
+    return np.sqrt((data_width/data_mass)**2-(sim_width/sim_mass)**2)
+
+def CalcSmearFactor():
+    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
+    sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    sim_results = PlotHistogram(sim_mass,"U1S",Output=True)
+    mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
+    data_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    data_results = PlotHistogram(data_mass,"DATA",Output=True)
+    print(f'Data width: {data_results["width"][0]} ± {data_results["width"][1]} \nUnsmeared sim width: {sim_results["width"][0]} ± {sim_results["width"][1]}')
+    sigma = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0])
+    err_due_sim_width = SmearFactor(sim_results["width"][0]+sim_results["width"][1],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0]) - sigma
+    err_due_sim_mass = SmearFactor(sim_results["width"][0],sim_results["mass"][0]+sim_results["mass"][1],data_results["width"][0],data_results["mass"][0]) - sigma
+    err_due_data_width = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0]+data_results["width"][1],data_results["mass"][0]) - sigma
+    err_due_data_mass = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0]+data_results["mass"][1]) - sigma
+    err_sigma = np.sqrt(err_due_sim_width**2+err_due_sim_mass**2+err_due_data_width**2+err_due_data_mass**2)
+    return (sigma,err_sigma)
 
 def main():
     #This allows for me to pass arguments in to the terminal to change important paramters without changing the code
@@ -149,38 +172,41 @@ def main():
 
     mup_P,mum_P,mup_E,mum_E = GetBranches(loc)
     output = {}
+    filename=""
     
     if ((args.Smearing).lower() == "on" and loc == "U1S") or (args.FullOutput).lower() == "true":
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
         rng = np.random.default_rng(seed=10)
-        sd_dif = np.sqrt(0.0455171**2 - 0.0400880351**2)
-        global Norm_rand
-        Norm_rand = (rng.normal(0,sd_dif,size=len(mum_E)))
-        sigma = CalcSmearFactor()
+        #Mininimising Chi2 approach (requires chaning CalcSmearFactor)
+        #sd_dif = np.sqrt(0.0455171**2 - 0.0400880351**2)
+        #global Norm_rand
+        #Norm_rand = (rng.normal(0,sd_dif,size=len(mum_E)))
+        #sigma = CalcSmearFactorByMinimise()
+        sigma,sigma_err = CalcSmearFactor()
         print(f'WOOO got a scale variable: {sigma}')
+        Norm_rand = rng.normal(0,sigma,size=len(mum_E))
         factor = 1+Norm_rand*sigma
+        print("before:",mup_P)
         mup_P *= factor
         mum_P *= factor
+        print("after",mup_P)
         #This is just convinient for the file name
-        smear = "_SmearingOn"
-        output["Smear_factor"] = sigma
-    elif loc =="U1S":
-        smear = "_SmearingOff"
-    else:
-        smear = ""
+        output["Smear_factor"] = (sigma,sigma_err)
+        filename = filename+"_Smeared"
     
     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
 
     if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on":
         #This is a tuple of format (value,uncertainty)
-        alpha_s = PlotHistogram(mass,loc,Output="alpha")
+        alpha_s = PlotHistogram(mass,"U1S_Uncalibrated",Output="alpha")
         mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
         mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-        alpha_d = PlotHistogram(mass,"DATA",Output="alpha",smear=smear)
+        alpha_d = PlotHistogram(mass,"DATA",Output="alpha")
         c = CalcC(alpha_s,alpha_d)
         output["C_ratio"] =  c
+        filename = filename+"_Calibrated"
     else:
-        PlotHistogram(mass,loc,smear=smear)
+        PlotHistogram(mass,filename)
 
     with open("Calibration_output.json","w") as OutputFile:
             dump(output,OutputFile,indent=2)
