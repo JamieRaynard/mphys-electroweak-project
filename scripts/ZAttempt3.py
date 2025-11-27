@@ -379,6 +379,7 @@ def Widthchi(tmass,simdatam,datam,calibrate,err):
     #print(min-xerror_p,min-xerror_n)
         print("the width error is",min-xerror_n)
     plt.figure()
+    return min
 
 
 
@@ -386,14 +387,21 @@ def Widthchi(tmass,simdatam,datam,calibrate,err):
 #Zdata_with_fit(tmass,simdatam,datam)
 #mikasuggestions(tmass,simdatam,datam)
 #Zstack_plot(tmass,simdatam,datam)
-#e2=plotmass(tmass,simdatam,datam,C_rat+C_err,err=True) 
-#e1=plotmass(tmass,simdatam,datam,C_rat,err=False)
 
-    # for the error in mass cauesd by calibration ----------------------------------------------------------------------------------------------------------
-#2=plotmass(tmass,simdatam,datam,C_rat+C_err,err=True) 
 
-#print("the calibration uncertancy is ",np.sqrt((e1-e2)**2))
-Widthchi(tmass,simdatam,datam,C_rat,err=False)
+#functions to run the mass and width and create the calirbation errors
+def mass(tmass,simdatam,datam,Cr,Cre,err1,err2):
+    e2=plotmass(tmass,simdatam,datam,Cre,err2) 
+    e1=plotmass(tmass,simdatam,datam,Cr,err1)
+    print("the calibration uncertancy in mass is ",np.sqrt((e1-e2)**2))
+
+mass(tmass,simdatam,datam,C_rat,C_rat+C_err,False,True)
+
+def width(tmass,simdatam,datam,Cr,Cre,err1,err2):
+    e2=Widthchi(tmass,simdatam,datam,Cre,err2) 
+    e1=Widthchi(tmass,simdatam,datam,Cr,err1)
+    print("the calibration uncertancy in width is ",e1-e2)
+width(tmass,simdatam,datam,C_rat,C_rat+C_err,False,True)
 '''
 output = {
     "Chi_sq":"placeholder",
