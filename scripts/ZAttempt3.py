@@ -165,7 +165,7 @@ def plotmass(tmass,simdatam,datam,calibrate,err):
     plt.xlabel("Mass_Gev")
     plt.ylabel("Frequency Density")
     plt.legend(loc='upper right')
-    plt.savefig(f"Zreconstructed weight sim ({'real' if err==False else 'dont-use'}).pdf")
+    plt.savefig(f"transient/Zreconstructed weight sim ({'real' if err==False else 'dont-use'}).pdf")
     plt.clf()
     plt.figure() # now for the chi ^2 plot of from the last 3  // now this will ahve to be recosntucted daat from real life not sim
 
@@ -186,7 +186,7 @@ def plotmass(tmass,simdatam,datam,calibrate,err):
     #print(qfit)
     xx = np.linspace((90.25), (91.75), 300)
     plt.plot(xx,functionpfit(xx))
-    plt.savefig(f"Z-chi({'real' if err==False else 'dont-use'}).pdf")
+    plt.savefig(f"transient/Z-chi({'real' if err==False else 'dont-use'}).pdf")
 
     min=-qfit[1]/(2*qfit[0])
     f=qfit[0]*min**2+qfit[1]*min+qfit[2]
@@ -244,7 +244,7 @@ def Zstack_plot(tmass,simdatam,datam):
     plt.xlabel("Mass_Gev")
     plt.ylabel("Frequency Density")
     plt.legend(loc='upper right')
-    plt.savefig("weights graph.pdf")
+    plt.savefig("transient/weights graph.pdf")
     plt.clf()
 
     plt.figure()
@@ -256,7 +256,7 @@ def Zstack_plot(tmass,simdatam,datam):
     plt.legend(loc='upper left',frameon=True, fontsize=8)
     
     plt.ylim(bottom=0)
-    plt.savefig("z-data-scatter.pdf")
+    plt.savefig("transient/z-data-scatter.pdf")
     plt.show()
     #plt.clf()
     plt.figure()
@@ -273,7 +273,7 @@ def Zstack_plot(tmass,simdatam,datam):
     plt.xlabel("Mass_Gev")
     plt.ylabel("ratio")
     plt.legend(loc='upper left',frameon=True, fontsize=8)
-    plt.savefig("z-ratios.pdf")
+    plt.savefig("transient/z-ratios.pdf")
     plt.show()
 
     #stack stuff
@@ -299,7 +299,7 @@ def Zstack_plot(tmass,simdatam,datam):
     ax2.set_ylabel("ratio")
     ax2.set_xlabel("Dimuon mass GeV")
     ax2.legend(loc='upper left',frameon=True, fontsize=8)
-    plt.savefig("Z-stack.pdf")
+    plt.savefig("transient/Z-stack.pdf")
 
     #plt.tight_layout()
     plt.show()
@@ -343,7 +343,7 @@ def Widthchi(tmass,simdatam,datam,calibrate,err):
     plt.xlabel("Mass_Gev")
     plt.ylabel("Frequency Density")
     plt.legend(loc='upper right')
-    plt.savefig(f"Zreconstructed width sim ({'real' if err==False else 'dont-use'}).pdf")
+    plt.savefig(f"transient/Zreconstructed width sim ({'real' if err==False else 'dont-use'}).pdf")
     plt.clf()
     plt.figure() # now for the chi ^2 plot of from the last 3  // now this will ahve to be recosntucted daat from real life not sim
 
@@ -362,7 +362,7 @@ def Widthchi(tmass,simdatam,datam,calibrate,err):
     #print(qfit)
     xx = np.linspace((0.8), (3.2), 300)
     plt.plot(xx,functionpfit(xx))
-    plt.savefig(f"Z-chi width({'real' if err==False else 'dont-use'}).pdf")
+    plt.savefig(f"transient/Z-chi width({'real' if err==False else 'dont-use'}).pdf")
 
     min=-qfit[1]/(2*qfit[0])
     f=qfit[0]*min**2+qfit[1]*min+qfit[2]
