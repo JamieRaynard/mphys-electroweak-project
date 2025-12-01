@@ -94,13 +94,29 @@ def PlotHistogram(mass,filename,Output=None):
         return 0
 
 def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
-    data_massHist,bins,_ = plt.hist(data_mass,bins=100,range=(9.200,9.750),histtype='step',label="Data",density=True)
-    unscaled_sim_massHist,bins,_ = plt.hist(unscaled_sim_mass,bins=100,range=(9.200,9.750),histtype='step',label="Sim without scaling",density=True)
-    scaled_massHist,bins,_ = plt.hist(scaled_sim_mass,bins=100,range=(9.200,9.750),histtype='step',label="Sim with scaling",density=True)
+    #data_massHist,bins,_ = plt.hist(data_mass,bins=100,range=(9.25,9.8),histtype='step',label="Data")#,density=True)
+    #unscaled_sim_massHist,bins,_ = plt.hist(unscaled_sim_mass,bins=100,range=(9.25,9.8),histtype='step',label="Sim without scaling")#,density=True)
+    #scaled_massHist,bins,_ = plt.hist(scaled_sim_mass,bins=100,range=(9.25,9.8),histtype='step',label="Sim with scaling")#,density=True)
+    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.2,9.8))#,density=True)
+    binwidth = bins[1] - bins[0]
+    binlist = [bins[0]+0.5*binwidth]
+    for i in range(1,(len(bins)-1)):
+        binlist.append(binlist[-1]+binwidth)
+    bincenters = np.array(binlist)
+    plt.scatter(bincenters, data_massHist, label = "Data", s=5 ,c='black')
+
+    background = np.min(data_massHist)
+
+    unscaled_sim_massHist,bins = np.histogram(unscaled_sim_mass, bins=100, range=(9.2,9.8))#,density=True)
+    plt.step(bincenters,unscaled_sim_massHist+background,label="Sim without scaling")
+
+    scaled_simHist,bins = np.histogram(scaled_sim_mass, bins = 100, range = (9.2,9.8))#,density=True)
+    plt.step(bincenters,scaled_simHist+background, label = "sim with scaling")
+
     plt.legend()
     plt.xlabel("Mass / GeV")
-    plt.ylabel("Frequency Density")
-    plt.title(r"R = norm($\alpha$,$\sigma$), factor = CR")
+    plt.ylabel("Candidates")
+    plt.title(r"Comparing the effect of momentum smearing")
     plt.savefig(f"transient/Upsilon_mass_comparisson.pdf")
     plt.clf()
     return 0
@@ -119,13 +135,13 @@ def Comparing():
         return 1
 
     mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
-    data_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    data_mass = Reconstruct(mup_P*c_ratio,mum_P*c_ratio,mup_E,mum_E)
     mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
     unscaled_sim_mass = Reconstruct(mup_P*c_ratio,mum_P*c_ratio,mup_E,mum_E)
     rng = np.random.default_rng(seed=10)
     Norm_rand = rng.normal(0,Smear_factor,size=len(mum_E))
     factor = 1+Norm_rand*Smear_factor
-    scaled_sim_mass = Reconstruct(mup_P*factor,mum_P*factor,mup_E,mum_E)
+    scaled_sim_mass = Reconstruct(mup_P*factor*c_ratio,mum_P*factor*c_ratio,mup_E,mum_E)
     CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass)
     return 0
 
