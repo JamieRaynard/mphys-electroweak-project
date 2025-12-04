@@ -24,7 +24,7 @@ def GetBranches(loc,calibration_factor=1):
     DATADIR="/storage/epp2/phshgg/Public/MPhysProject_2025_2026/tuples/0/"
     with uproot.open(f"{DATADIR}/DecayTree__U1S__{loc}__d13600GeV_24c4.root:DecayTree") as t:
         Rawdata = t.arrays(["mup_pt","mup_eta","mup_phi","mum_pt","mum_eta","mum_phi"],library="np")
-    data = ConvertCoords(Rawdata)
+    data = ConvertCoords(Rawdata) #root file is in eta,phi but we want px,py,pz
     mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
     mup_P = mup_P*calibration_factor
     mum_P = mum_P*calibration_factor
@@ -40,11 +40,9 @@ def ConvertCoords(data):
     data["mup_PX"] = data["mup_pt"]*np.cos(data["mup_phi"])
     data["mup_PY"] = data["mup_pt"]*np.sin(data["mup_phi"])
     data["mup_PZ"] = data["mup_pt"]*np.sinh(data["mup_eta"])
-    data["mup_P"] = data["mup_pt"]*np.cosh(data["mup_eta"])
     data["mum_PX"] = data["mum_pt"]*np.cos(data["mum_phi"])
     data["mum_PY"] = data["mum_pt"]*np.sin(data["mum_phi"])
     data["mum_PZ"] = data["mum_pt"]*np.sinh(data["mum_eta"])
-    data["mum_P"] = data["mum_pt"]*np.cosh(data["mum_eta"])
     return data
 
 def Reconstruct(mup_P,mum_P,mup_E,mum_E):
@@ -53,6 +51,7 @@ def Reconstruct(mup_P,mum_P,mup_E,mum_E):
     tot_PY = mup_P[1] + mum_P[1]
     tot_PZ = mup_P[2] + mum_P[2]
     tot_P = np.sqrt(tot_PX**2+tot_PY**2+tot_PZ**2)
+    #This just stops any issues of having E^2 < P^2, which shouldn't happen now I fixed calibration anyway
     mass_sq = np.maximum(tot_E**2 - tot_P**2,0)
     mass = np.sqrt(mass_sq)
     return mass
@@ -77,6 +76,7 @@ def PlotHistogram(mass,filename,Output=None):
     print(fitParam,"\n",err)
     model = CrystalBallFit(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5])
     plt.plot(bincenters,model,label="Crystall Ball function\nWith Background")
+    #A more accurate fit could be a double tailed crystal ball
     
     #print(f'Saving plot to transient/Upsilon_mass{filename}.pdf')
 
@@ -98,9 +98,6 @@ def PlotHistogram(mass,filename,Output=None):
         return 0
 
 def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
-    #data_massHist,bins,_ = plt.hist(data_mass,bins=100,range=(9.25,9.8),histtype='step',label="Data")#,density=True)
-    #unscaled_sim_massHist,bins,_ = plt.hist(unscaled_sim_mass,bins=100,range=(9.25,9.8),histtype='step',label="Sim without scaling")#,density=True)
-    #scaled_massHist,bins,_ = plt.hist(scaled_sim_mass,bins=100,range=(9.25,9.8),histtype='step',label="Sim with scaling")#,density=True)
     data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.25,9.75),density=True)
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
@@ -109,13 +106,14 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     bincenters = np.array(binlist)
     plt.scatter(bincenters, data_massHist, label = "Data", s=5 ,c='black')
 
+    #(Probably too) simplistic model for the background of just a flat uniform dist.
     background = np.min(data_massHist)
 
     unscaled_sim_massHist,bins = np.histogram(unscaled_sim_mass, bins=100, range=(9.25,9.75),density=True)
-    plt.step(bincenters,unscaled_sim_massHist+background,label="Sim without calibration")
+    plt.step(bincenters,unscaled_sim_massHist+background,label="Sim without smearing")
 
     scaled_simHist,bins = np.histogram(scaled_sim_mass, bins = 100, range = (9.25,9.75),density=True)
-    plt.step(bincenters,scaled_simHist+background, label = "sim with calibration")
+    plt.step(bincenters,scaled_simHist+background, label = "sim with smearing")
 
     plt.legend()
     plt.xlabel("Mass / GeV")
@@ -137,10 +135,10 @@ def Comparing():
     except KeyError:
         print('Please run the script with --FullOutput="TRUE" first to get all required calibration information')
         return 1
-
+    
     mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
     data_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
+    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S",calibration_factor=1+alpha)
     unscaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     rng = np.random.default_rng(seed=10)
     Norm_rand = rng.normal(0,1,size=len(mum_E))
@@ -173,6 +171,7 @@ def CalcC(alpha_s,alpha_d):
     return (c,err_tot)
 
 def width_chi2(sigma,width_data,width_data_err,mup_P_orig,mum_P_orig,mup_E,mum_E):
+    #Outdated: need to recalculate the mup_E and mum_E with smearing
     global Norm_rand
     factor = 1+Norm_rand*sigma
     mup_P = mup_P_orig*factor
@@ -182,6 +181,7 @@ def width_chi2(sigma,width_data,width_data_err,mup_P_orig,mum_P_orig,mup_E,mum_E
     return (width_sim[0] - width_data)**2 / width_data_err**2
 
 def CalcSmearFactorByMinimise():
+    #Currently unused
     mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     data_width = PlotHistogram(mass,"DATA",Output=True)["width"]
@@ -196,9 +196,11 @@ def CalcSmearFactor():
     mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
     sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     sim_results = PlotHistogram(sim_mass,"U1S",Output=True)
+
     mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
     data_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     data_results = PlotHistogram(data_mass,"DATA",Output=True)
+    
     print(f'Data width: {data_results["width"][0]} ± {data_results["width"][1]} \nUnsmeared sim width: {sim_results["width"][0]} ± {sim_results["width"][1]}')
     sigma = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0])
     err_due_sim_width = SmearFactor(sim_results["width"][0]+sim_results["width"][1],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0]) - sigma
@@ -217,10 +219,10 @@ def main():
     parser.add_argument('--Smearing',default="off",type=str)
     parser.add_argument('--Calibration',default="off",type=str)
     parser.add_argument('--FullOutput',default="FALSE",type=str)
-    #If you run compare, that overwrites all other arguments
     parser.add_argument('--Compare',default="FALSE",type=str)
     args = parser.parse_args()
 
+    #If you run compare, that overwrites all other arguments
     if (args.Compare).lower() == "true":
         success = Comparing()
         return success
