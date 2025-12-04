@@ -19,14 +19,18 @@ def ResFit(x,total,mean,sd,A,B):
 def CrystalBallFit(x,beta,m,loc,scale,A,B):
     return crystalball.pdf(x,beta,m,loc=loc,scale=scale) + A*np.exp(-B*x)
 
-def GetBranches(loc):
+def GetBranches(loc,calibration_factor=1):
     MUON_MASS = 0.1057
     DATADIR="/storage/epp2/phshgg/Public/MPhysProject_2025_2026/tuples/0/"
     with uproot.open(f"{DATADIR}/DecayTree__U1S__{loc}__d13600GeV_24c4.root:DecayTree") as t:
         Rawdata = t.arrays(["mup_pt","mup_eta","mup_phi","mum_pt","mum_eta","mum_phi"],library="np")
     data = ConvertCoords(Rawdata)
     mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
-    mup_E,mum_E = np.sqrt(data["mup_P"]**2+MUON_MASS**2),np.sqrt(data["mum_P"]**2+MUON_MASS**2)
+    mup_P = mup_P*calibration_factor
+    mum_P = mum_P*calibration_factor
+    mup_P_mag = np.sqrt(mup_P[0]**2+mup_P[1]**2+mup_P[2]**2)
+    mum_P_mag = np.sqrt(mum_P[0]**2+mum_P[1]**2+mum_P[2]**2)
+    mup_E,mum_E = np.sqrt(mup_P_mag**2+MUON_MASS**2),np.sqrt(mum_P_mag**2+MUON_MASS**2)
     #For now I am only using these 4 values
     return mup_P,mum_P,mup_E,mum_E
 
@@ -97,7 +101,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     #data_massHist,bins,_ = plt.hist(data_mass,bins=100,range=(9.25,9.8),histtype='step',label="Data")#,density=True)
     #unscaled_sim_massHist,bins,_ = plt.hist(unscaled_sim_mass,bins=100,range=(9.25,9.8),histtype='step',label="Sim without scaling")#,density=True)
     #scaled_massHist,bins,_ = plt.hist(scaled_sim_mass,bins=100,range=(9.25,9.8),histtype='step',label="Sim with scaling")#,density=True)
-    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.2,9.8))#,density=True)
+    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.25,9.75),density=True)
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -107,15 +111,15 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
 
     background = np.min(data_massHist)
 
-    unscaled_sim_massHist,bins = np.histogram(unscaled_sim_mass, bins=100, range=(9.2,9.8))#,density=True)
-    plt.step(bincenters,unscaled_sim_massHist+background,label="Sim without scaling")
+    unscaled_sim_massHist,bins = np.histogram(unscaled_sim_mass, bins=100, range=(9.25,9.75),density=True)
+    plt.step(bincenters,unscaled_sim_massHist+background,label="Sim without calibration")
 
-    scaled_simHist,bins = np.histogram(scaled_sim_mass, bins = 100, range = (9.2,9.8))#,density=True)
-    plt.step(bincenters,scaled_simHist+background, label = "sim with scaling")
+    scaled_simHist,bins = np.histogram(scaled_sim_mass, bins = 100, range = (9.25,9.75),density=True)
+    plt.step(bincenters,scaled_simHist+background, label = "sim with calibration")
 
     plt.legend()
     plt.xlabel("Mass / GeV")
-    plt.ylabel("Candidates")
+    plt.ylabel("Normalised density")
     plt.title(r"Comparing the effect of momentum smearing")
     plt.savefig(f"transient/Upsilon_mass_comparisson.pdf")
     plt.clf()
@@ -125,7 +129,7 @@ def Comparing():
     try:
         with open("Calibration_output.json",) as InputFile:
             Calibration = load(InputFile)
-        c_ratio = Calibration["C_ratio"][0]
+        alpha = 1 - Calibration["C_ratio"][0]
         Smear_factor = Calibration["Smear_factor"][0]
     except FileNotFoundError:
         print('Please run the script with --FullOutput="TRUE" first to get calibration information')
@@ -135,13 +139,14 @@ def Comparing():
         return 1
 
     mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
-    data_mass = Reconstruct(mup_P*c_ratio,mum_P*c_ratio,mup_E,mum_E)
+    data_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
-    unscaled_sim_mass = Reconstruct(mup_P*c_ratio,mum_P*c_ratio,mup_E,mum_E)
+    unscaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     rng = np.random.default_rng(seed=10)
-    Norm_rand = rng.normal(0,Smear_factor,size=len(mum_E))
-    factor = 1+Norm_rand*Smear_factor
-    scaled_sim_mass = Reconstruct(mup_P*factor*c_ratio,mum_P*factor*c_ratio,mup_E,mum_E)
+    Norm_rand = rng.normal(0,1,size=len(mum_E))
+    calibration_factor = 1+alpha+Norm_rand*Smear_factor
+    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S",calibration_factor=calibration_factor)
+    scaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass)
     return 0
 
@@ -250,8 +255,7 @@ def main():
         print(f'WOOO got a scale variable: {sigma} ± {sigma_err}')
         Norm_rand = rng.normal(0,sigma,size=len(mum_E))
         factor = 1+Norm_rand*sigma
-        mup_P *= factor
-        mum_P *= factor
+        mup_P,mum_P,mup_E,mum_E = GetBranches(loc,calibration_factor=factor)
         #This is just convinient for the file name
         output["Smear_factor"] = (sigma,sigma_err)
         filename = filename+"_Smeared"
