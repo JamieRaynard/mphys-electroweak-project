@@ -393,7 +393,7 @@ def Widthchi(tmass,simdatam,datam,calibrate,err):
 def mass(tmass,simdatam,datam,Cr,Cre,err1,err2):
     e2=plotmass(tmass,simdatam,datam,Cre,err2) 
     e1=plotmass(tmass,simdatam,datam,Cr,err1)
-    print("the calibration uncertancy in mass is ",np.sqrt((e1-e2)**2))
+    print("the calibration uncertancy in mass is ",np.sqrt((e1-e2)**2))   #so true means it has error calibration in it
 
 mass(tmass,simdatam,datam,C_rat,C_rat+C_err,False,True)
 
