@@ -140,6 +140,7 @@ def plotmass(tmass,simdatam,datam,calibrate,err):
     
     # ratio only has the t mass in it, the hsitogram suses this wieghtign witht the recosntructed in it
     #scaling the hisogram
+    #calibration is only for the simulation
 
     ratio905=fiteq(tmass,fitParam[0],fitParam[1],90.5,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
     simmassHistweights905,binnweights905 = np.histogram(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), weights=ratio905)
@@ -205,20 +206,25 @@ def plotmass(tmass,simdatam,datam,calibrate,err):
     plt.figure()
     return min
 
-def Zstack_plot(tmass,simdatam,datam):
+def Zstack_plot(tmass,simdatam,datam,c_rat):   #use stack 2
     c=C_rat #error in calibration
-    dataHist,databinn,_d=plt.hist(conaeq(datam,1), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
+    dataHist,databinn,_d=plt.hist(conaeq(datam,1), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data",linewidth=1) #the data recosntuction data #for recosntructed simulation 
     trmassHist,binn,_t=plt.hist(tmass, bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-true",density=True,linewidth=1) #for true mass
+    simHist_forfit,binnsim,_sim=plt.hist(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), histtype="step",density=True,label="simulation",linewidth=1)
     centers=0.5*(binn[1:]+binn[:-1])
     w=3
     m=91.1876
     fitParam,_tt = curve_fit(fiteq,centers,trmassHist,p0=[5,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,1]),maxfev=10000)# this uses the true mass
     print(fitParam)
-    
-    # ratio only has the t mass in it, the hsitogram suses this wieghtign witht the recosntructed in it
-    #scaling the hisogram
-    
 
+    fitParam_sim,_tt_sim = curve_fit(fiteq,centers,simHist_forfit,p0=[5,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,1]),maxfev=10000)
+    print(fitParam_sim)
+    fit_values = fiteq(centers, *fitParam_sim)
+    scalef=np.sum(dataHist)/np.sum(fit_values) 
+    fit_values=fit_values*scalef
+    plt.step(centers,fit_values,where="post",linewidth=2,label="step-function fit")
+     #ratio only has the t mass in it, the hsitogram suses this wieghtign witht the recosntructed in it
+    #scaling the hisogram
     ratio905=fiteq(tmass,fitParam[0],fitParam[1],90.5,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
     simmassHistweights905,binnweights905 = np.histogram(conaeq(simdatam,c), bins=np.linspace(80.0,100.0,50), weights=ratio905)
 
@@ -236,9 +242,11 @@ def Zstack_plot(tmass,simdatam,datam):
     sim_scale_factor915 = np.sum(dataHist) / np.sum(simmassHistweights915) 
     simHist_scaled915 = simmassHistweights915 * sim_scale_factor915
 
-    plt.plot(centers, simHist_scaled905, '-', linewidth=2, label='scaled-weighted 90.5 simulation')
-    plt.plot(centers, simHist_scaled91, '-', linewidth=2, label='scaled-weighted 91 simulation')
-    plt.plot(centers, simHist_scaled915, '-', linewidth=2, label='scaled-weighted 91.5 simulation')
+    #plt.plot(centers, simHist_scaled905, '-', linewidth=2, label='scaled-weighted 90.5 simulation')
+    #plt.plot(centers, simHist_scaled91, '-', linewidth=2, label='scaled-weighted 91 simulation')
+    #plt.plot(centers, simHist_scaled915, '-', linewidth=2, label='scaled-weighted 91.5 simulation')
+
+
 
     plt.title("Z-reconstucted weighted sim")
     plt.xlabel("Mass_Gev")
@@ -249,7 +257,7 @@ def Zstack_plot(tmass,simdatam,datam):
 
     plt.figure()
     plt.scatter(centers,dataHist, label='data ',color="black",s=10)
-    plt.step(centers, simHist_scaled91, '-', linewidth=2,where='mid', label='scaled-weighted 91 simulation')
+    plt.step(centers, fit_values, '-', linewidth=2,where='mid', label='Simulation best fit')
     plt.title("Z-data with 91 sim")
     plt.xlabel("Mass_Gev")
     plt.ylabel("Frequency ")
@@ -278,25 +286,37 @@ def Zstack_plot(tmass,simdatam,datam):
 
     #stack stuff
     dataerrors=np.sqrt(dataHist)
+
+    plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["Times New Roman", "Times", "STIX"],    # this is making the graphs look like PRL
+    "mathtext.fontset": "stix",
+    "font.size": 12,
+})
+    plt.rcParams.update({
+    "lines.linewidth": 1.2,
+    "lines.markersize": 4,
+    "axes.linewidth": 0.8,
+})
     plt.figure()
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(6, 6),
                                    gridspec_kw={'hspace': 0.05})
     
     #top
    # ax1.scatter(centers,dataHist ,label='data ',color="black",s=10)
-    ax1.errorbar(centers, dataHist, yerr=dataerrors,label='data ',color="black",fmt=".",markersize=2.5 )
-    ax1.step(centers, simHist_scaled91, '-', linewidth=2,where='mid', label='scaled-weighted 91 simulation')
-    ax1.set_ylabel("frequency")
+    ax1.errorbar(centers, dataHist, yerr=dataerrors,label='Data ',color="black",fmt=".",markersize=2.5 )
+    ax1.step(centers, simHist_scaled91, '-', linewidth=2,where='mid', label='91 Gev template')
+    ax1.set_ylabel("Frequency")
     ax1.legend(loc='upper left',frameon=True, fontsize=8)
 
     # bottom
     ratioerror=ratio_data_91*dataerrors/dataHist
     #ax2.scatter(centers,ratio_data_91,label='data ',color="black",s=10)
-    ax2.errorbar(centers, ratio_data_91, yerr=ratioerror,label='data/91Gev template ',color="black",fmt=".",markersize=2.5 )
-    ax2.step(centers, ratio_905_91, '-', linewidth=2,where='mid', label='90.5-91 ratio')
-    ax2.step(centers, ratio_91_91, '-', linewidth=2,where='mid', label='91-91 ratio')
-    ax2.step(centers, ratio_915_91, '-', linewidth=2,where='mid', label='91.5-91 ratio')
-    ax2.set_ylabel("ratio")
+    ax2.errorbar(centers, ratio_data_91, yerr=ratioerror,label='Data/91 Gev template ',color="black",fmt=".",markersize=2.5 )
+    ax2.step(centers, ratio_905_91, '-', linewidth=2,where='mid', label='90.5/91 Gev template ratio')
+    ax2.step(centers, ratio_91_91, '-', linewidth=2,where='mid', label='91/91 Gev template ratio')
+    ax2.step(centers, ratio_915_91, '-', linewidth=2,where='mid', label='91.5/91 Gev template ratio')
+    ax2.set_ylabel("Ratio")
     ax2.set_xlabel("Dimuon mass GeV")
     ax2.legend(loc='upper left',frameon=True, fontsize=8)
     plt.savefig("transient/Z-stack.pdf")
@@ -386,7 +406,7 @@ def Widthchi(tmass,simdatam,datam,calibrate,err):
 #TrueZfit_allplots(tmass,simdatam,datam)
 #Zdata_with_fit(tmass,simdatam,datam)
 #mikasuggestions(tmass,simdatam,datam)
-#Zstack_plot(tmass,simdatam,datam)
+Zstack_plot(tmass,simdatam,datam,C_rat)
 
 
 #functions to run the mass and width and create the calirbation errors
@@ -395,7 +415,7 @@ def mass(tmass,simdatam,datam,Cr,Cre,err1,err2):
     e1=plotmass(tmass,simdatam,datam,Cr,err1)
     print("the calibration uncertancy in mass is ",np.sqrt((e1-e2)**2))   #so true means it has error calibration in it
 
-mass(tmass,simdatam,datam,C_rat,C_rat+C_err,False,True)
+#mass(tmass,simdatam,datam,C_rat,C_rat+C_err,False,True)
 
 def width(tmass,simdatam,datam,Cr,Cre,err1,err2):
     e2=Widthchi(tmass,simdatam,datam,Cre,err2) 
@@ -411,3 +431,116 @@ output = {
 with open(f'Z_result_calibration_{args.Calibration}.json',"w") as OutputFile:
     dump(output,OutputFile,indent=2)
 ''' #Delete ''' to use this to output result to a json file
+
+
+def Zstack_plot_two(tmass,simdatam,datam,c_rat):   #use this Zstack 2  i think this is accuarete and stack 1 isnt
+    c=C_rat #error in calibration
+    dataHist,databinn,_d=plt.hist(conaeq(datam,1), bins=np.linspace(86.0,96.0,50), histtype="step",label="Z-data",linewidth=1) #the data recosntuction data #for recosntructed simulation 
+    trmassHist,binn,_t=plt.hist(tmass, bins=np.linspace(86.0,96.0,50), histtype="step",label="Z-true",density=True,linewidth=1) #for true mass
+    simHist_forfit,binnsim,_sim=plt.hist(conaeq(simdatam,c), bins=np.linspace(86.0,96.0,50), histtype="step",density=True,label="simulation",linewidth=1)
+    centers=0.5*(binn[1:]+binn[:-1])
+    w=3
+    m=91.1876
+    fitParam,_tt = curve_fit(fiteq,centers,trmassHist,p0=[6,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,2]),maxfev=10000)# this uses the true mass
+    print(fitParam)
+
+    fitParam_sim,_tt_sim = curve_fit(fiteq,centers,simHist_forfit,p0=[6,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,2]),maxfev=10000)
+    print(fitParam_sim)
+    fit_model = fiteq(centers, *fitParam_sim)
+    scalef=np.sum(dataHist)/np.sum(fit_model) 
+    fit_model_scale=fit_model*scalef
+
+    ratio905=fiteq(tmass,fitParam[0],fitParam[1],90.5,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    simmassHistweights905,binnweights905 = np.histogram(conaeq(simdatam,c), bins=np.linspace(86.0,96.0,50), weights=ratio905)
+
+    ratio91=fiteq(tmass,fitParam[0],fitParam[1],91,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    simmassHistweights91,binnweights91 = np.histogram(conaeq(simdatam,c), bins=np.linspace(86.0,96.0,50), weights=ratio91)
+
+    ratio915=fiteq(tmass,fitParam[0],fitParam[1],91.5,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    simmassHistweights915,binnweights915 = np.histogram(conaeq(simdatam,c), bins=np.linspace(86.0,96.0,50), weights=ratio915)
+
+    ratio914=fiteq(tmass,fitParam[0],fitParam[1],91.4,fitParam[3],fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    simmassHistweights914,binnweights914 = np.histogram(conaeq(simdatam,c), bins=np.linspace(86.0,96.0,50), weights=ratio914)
+
+    sim_scale_factor905= np.sum(dataHist) / np.sum(simmassHistweights905)
+    simHist_scaled905 = simmassHistweights905 * sim_scale_factor905
+    
+    sim_scale_factor91= np.sum(dataHist) / np.sum(simmassHistweights91) 
+    simHist_scaled91 = simmassHistweights91 * sim_scale_factor91
+
+    sim_scale_factor915 = np.sum(dataHist) / np.sum(simmassHistweights915) 
+    simHist_scaled915 = simmassHistweights915 * sim_scale_factor915
+    sim_scale_factor914 = np.sum(dataHist) / np.sum(simmassHistweights914) 
+    simHist_scaled914 = simmassHistweights914 * sim_scale_factor914
+
+
+
+    plt.figure()
+    plt.step(centers, simHist_scaled915,where="mid",linewidth=2,label="Simulation 91.5")
+    plt.step(centers, simHist_scaled91,where="mid",linewidth=2,label="Simulation 91")
+    plt.scatter(centers,dataHist, label='data ',color="black",s=10)
+    plt.step(centers, fit_model_scale,where="mid",linewidth=2,label="Simulation fit")
+    #simHist_forfit,binnsim,_sim=plt.hist(conaeq(simdatam,c), bins=np.linspace(86.0,96.0,50), histtype="step",density=False,label="simulation",linewidth=1)
+    plt.title("Z-reconstucted weighted sim")
+    plt.xlabel("Mass_Gev")
+    plt.ylabel("Frequency Density")
+    plt.legend(loc='upper right')
+    plt.savefig("transient/check.pdf")
+    plt.clf()
+    
+
+
+    plt.figure()
+    plt.step(centers, fit_model_scale/fit_model_scale,where="mid",linewidth=2)
+    plt.step(centers, simHist_scaled915/fit_model_scale,where="mid",linewidth=2,label="91.5 GeV")
+    #plt.step(centers, simHist_scaled915/fit_model_scale,where="mid",linewidth=2,label="91.5 GeV")
+    plt.step(centers, simHist_scaled91/fit_model_scale,where="mid",linewidth=2,label="91 GeV")
+    plt.scatter(centers,dataHist/fit_model_scale,label='data ',color="black",s=10)
+    #simHist_forfit,binnsim,_sim=plt.hist(conaeq(simdatam,c), bins=np.linspace(86.0,96.0,50), histtype="step",density=False,label="simulation",linewidth=1)
+    plt.title("Z-reconstucted weighted sim")
+    plt.xlabel("Mass_Gev")
+    plt.ylabel("Frequency Density")
+    plt.legend(loc='upper right')
+    plt.savefig("transient/check2.pdf")
+    plt.clf()
+
+    dataerrors=np.sqrt(dataHist)
+
+    plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["Times New Roman", "Times", "STIX"],    # this is making the graphs look like PRL
+    "mathtext.fontset": "stix",
+    "font.size": 12,
+})
+    plt.rcParams.update({
+    "lines.linewidth": 1.2,
+    "lines.markersize": 4,
+    "axes.linewidth": 0.8,
+})
+    plt.figure()
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(6, 6),
+                                   gridspec_kw={'hspace': 0.05})
+    
+    #top
+   # ax1.scatter(centers,dataHist ,label='data ',color="black",s=10)
+    ax1.errorbar(centers, dataHist, yerr=dataerrors,label='Data ',color="black",fmt=".",markersize=2.5 )
+    ax1.step(centers, fit_model_scale, '-', linewidth=2,where='mid', label='Simulation fit')
+    ax1.set_ylabel("Frequency")
+    ax1.legend(loc='upper left',frameon=True, fontsize=8)
+
+# bottom
+    ratioerror=(dataHist/fit_model_scale)*(dataerrors/dataHist)
+    #ax2.scatter(centers,ratio_data_91,label='data ',color="black",s=10)
+    ax2.errorbar(centers, dataHist/fit_model_scale, yerr=ratioerror,color="black",fmt=".",markersize=2.5 )
+    ax2.step(centers, simHist_scaled91/fit_model_scale, '-', linewidth=2,where='mid', label='91 GeV')
+    ax2.step(centers, simHist_scaled915/fit_model_scale, '-', linewidth=2,where='mid', label='91.5 Gev')
+    ax2.step(centers, fit_model_scale/fit_model_scale, '-', linewidth=2,where='mid')
+    ax2.set_ylabel("Ratio")
+    ax2.set_xlabel("Dimuon mass GeV")
+    ax2.legend(loc='upper left',frameon=True, fontsize=8)
+    plt.savefig("transient/Z-stack-two.pdf")
+
+    #plt.tight_layout()
+    plt.show()
+    
+Zstack_plot_two(tmass,simdatam,datam,C_rat)

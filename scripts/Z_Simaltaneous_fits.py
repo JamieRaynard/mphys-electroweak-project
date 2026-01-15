@@ -188,7 +188,7 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     ax.legend()
     plt.savefig(f"transient/Z width+mass CHI({'real' if err==False else 'dont-use'}).pdf")
 
-    xi = np.linspace(x.min(), x.max(), 200)
+    xi = np.linspace(x.min(), x.max(), 200)#////////////////////////////////////////////this is where the heatmap coems in and hence the claulations for min ti find mass and width
     yi = np.linspace(y.min(), y.max(), 200)
     Xi, Yi = np.meshgrid(xi, yi)
 
@@ -196,12 +196,23 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     Zi = griddata((x, y),z,(Xi, Yi),method='linear')
 
     cmap =ListedColormap(["blue","green"])
+    plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["Times New Roman", "Times", "STIX"],    # this is making the graphs look like PRL
+    "mathtext.fontset": "stix",
+    "font.size": 12,
+})
+    plt.rcParams.update({
+    "lines.linewidth": 1.2,
+    "lines.markersize": 4,
+    "axes.linewidth": 0.8,
+})
     plt.figure()
     plt.pcolormesh(Xi, Yi, Zi,edgecolors='face', shading='auto',cmap='Blues_r')
-    plt.xlabel("tempalte width")
-    plt.ylabel("template mass")
-    plt.colorbar(label="chi^2")
+    plt.xlabel("Template width GeV")
+    plt.ylabel("Template mass GeV")
+    plt.colorbar(label="χ^2")
     plt.show()
     plt.savefig(f"transient/Z heatmap({'real' if err==False else 'dont-use'}).pdf")
 
-sim_fits(tmass,simdatam,datam,C_rat+C_err,False)
+sim_fits(tmass,simdatam,datam,C_rat,False)
