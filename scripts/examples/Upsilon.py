@@ -117,9 +117,9 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
 
     plt.legend()
     plt.xlabel("Mass / GeV")
-    plt.ylabel("Normalised density")
+    plt.ylabel("Frequency Density")
     plt.title(r"Comparing the effect of momentum smearing")
-    plt.savefig(f"transient/Upsilon_mass_comparisson.pdf")
+    plt.savefig(f"transient/Upsilon_mass_comparisson_notitle.png")
     plt.clf()
     return 0
 
@@ -161,7 +161,8 @@ def CalcAlpha(m,m_err):
     return (alph,err_tot)
 
 def c_ratio(alph_s,alph_d):
-    return (1+alph_s)/(1+alph_d)
+    return (1+alph_d)/(1+alph_s)
+    #I am not 100% sure which way around these should be
 
 def CalcC(alpha_s,alpha_d):
     c = c_ratio(alpha_s[0],alpha_d[0])
@@ -255,7 +256,7 @@ def main():
         #Calculating directly approach
         sigma,sigma_err = CalcSmearFactor()
         print(f'WOOO got a scale variable: {sigma} ± {sigma_err}')
-        Norm_rand = rng.normal(0,sigma,size=len(mum_E))
+        Norm_rand = rng.normal(0,1,size=len(mum_E))
         factor = 1+Norm_rand*sigma
         mup_P,mum_P,mup_E,mum_E = GetBranches(loc,calibration_factor=factor)
         #This is just convinient for the file name
