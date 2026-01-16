@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import griddata
 from scipy.interpolate import CubicSpline
 from matplotlib.colors import ListedColormap
+from iminuit import Minuit
 #where is the main function? :(
 
 #This allows for me to pass arguments in to the terminal to change important paramters without changing the code
@@ -19,7 +20,7 @@ parser.add_argument('--Calibration',default="FALSE",type=str)
 args = parser.parse_args()
 if (args.Calibration).lower() == "true":
     try:
-        with open("C_ratio.json",) as InputFile:
+        with open("Calibration_output.json",) as InputFile:
             C_rat,C_err =  load(InputFile)["C_ratio"]
         print(f'Woo we imported {C_rat} ± {C_err}')
     except FileNotFoundError:
@@ -161,9 +162,11 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     chi915_1=np.sum(((dataHist-simHist_scaled915_1)**2)/dataHist)
     chi915_2=np.sum(((dataHist-simHist_scaled915_2)**2)/dataHist)
     chi915_3=np.sum(((dataHist-simHist_scaled915_3)**2)/dataHist)
+
     x=np.array([1,2,3,1,2,3,1,2,3])
     y=np.array([90.5,90.5,90.5,91,91,91,91.5,91.5,91.5])
     z=np.array([chi905_1,chi905_2,chi905_3,chi91_1,chi91_2,chi91_3,chi915_1,chi915_2,chi915_3])
+
     #xi = np.linspace(x.min()-0.1, x.max()+0.1, 100)
    # yi = np.linspace(y.min()-0.1, y.max()+0.1, 100)
     #X, Y = np.meshgrid(xi, yi)
@@ -214,5 +217,13 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     plt.colorbar(label="χ^2")
     plt.show()
     plt.savefig(f"transient/Z heatmap({'real' if err==False else 'dont-use'}).pdf")
+#///////////////////////////////////////////////////////////////////////////////// calulcations for min mass and width
+    coords = np.column_stack((y, x))
+    def chi_func_try(mi,wi):
+        return float(griddata(coords,values=z,xi=(mi,wi),method='cubic'))
+    m = Minuit(chi_func_try, 90.6, 2.4)
+    m.migrad()
+    print(m.values)
+    print("Chi^2 mini:", m.fval)
 
 sim_fits(tmass,simdatam,datam,C_rat,False)
