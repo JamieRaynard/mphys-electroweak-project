@@ -170,9 +170,9 @@ def plotmass(tmass,simdatam,datam,calibrate,err):
     plt.clf()
     plt.figure() # now for the chi ^2 plot of from the last 3  // now this will ahve to be recosntucted daat from real life not sim
 
-    chi905=np.sum(((dataHist-simHist_scaled905)**2)/dataHist)
-    chi91=np.sum(((dataHist-simHist_scaled91)**2)/dataHist)
-    chi915=np.sum(((dataHist-simHist_scaled915)**2)/dataHist)
+    chi905=np.sum(((dataHist-simHist_scaled905)**2)/simHist_scaled905)
+    chi91=np.sum(((dataHist-simHist_scaled91)**2)/simHist_scaled91)
+    chi915=np.sum(((dataHist-simHist_scaled915)**2)/simHist_scaled915)
 
     plt.title("Z-chi")
     y=np.array([chi905,chi91,chi915])
@@ -367,9 +367,9 @@ def Widthchi(tmass,simdatam,datam,calibrate,err):
     plt.clf()
     plt.figure() # now for the chi ^2 plot of from the last 3  // now this will ahve to be recosntucted daat from real life not sim
 
-    chi249=np.sum(((dataHist-simHist_scaled249)**2)/dataHist)
-    chi250=np.sum(((dataHist-simHist_scaled250)**2)/dataHist)
-    chi251=np.sum(((dataHist-simHist_scaled251)**2)/dataHist)
+    chi249=np.sum(((dataHist-simHist_scaled249)**2)/simHist_scaled249)
+    chi250=np.sum(((dataHist-simHist_scaled250)**2)/simHist_scaled250)
+    chi251=np.sum(((dataHist-simHist_scaled251)**2)/simHist_scaled251)
     plt.title("Z-chi")
     y=np.array([chi249,chi250,chi251])
     #print(y)

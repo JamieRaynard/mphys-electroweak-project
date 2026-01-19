@@ -165,7 +165,7 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
 
     x=np.array([1,2,3,1,2,3,1,2,3])
     y=np.array([90.5,90.5,90.5,91,91,91,91.5,91.5,91.5])
-    z=np.array([chi905_1,chi905_2,chi905_3,chi91_1,chi91_2,chi91_3,chi915_1,chi915_2,chi915_3])
+    chi_values=np.array([chi905_1,chi905_2,chi905_3,chi91_1,chi91_2,chi91_3,chi915_1,chi915_2,chi915_3])
 
     #xi = np.linspace(x.min()-0.1, x.max()+0.1, 100)
    # yi = np.linspace(y.min()-0.1, y.max()+0.1, 100)
@@ -174,7 +174,7 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     t = np.arange(len(x))  
     cs_x = CubicSpline(t, x)
     cs_y = CubicSpline(t, y)
-    cs_z = CubicSpline(t, z)
+    cs_z = CubicSpline(t, chi_values)
     t_fine = np.linspace(t.min(), t.max(), 200)
     x_fine = cs_x(t_fine)
     y_fine = cs_y(t_fine)
@@ -184,7 +184,7 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     ax = fig.add_subplot(111, projection='3d')
     #ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8)
     ax.plot(x_fine, y_fine, z_fine, color='blue', label='Cubic Spline line')
-    ax.scatter(x, y, z,color="red",label="data")
+    ax.scatter(x, y, chi_values,color="red",label="data")
     ax.set_xlabel("target width")
     ax.set_ylabel("target mass")
     ax.set_zlabel("chi²")
@@ -196,7 +196,7 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     Xi, Yi = np.meshgrid(xi, yi)
 
 
-    Zi = griddata((x, y),z,(Xi, Yi),method='linear')
+    Zi = griddata((x, y),chi_values,(Xi, Yi),method='linear')
 
     cmap =ListedColormap(["blue","green"])
     plt.rcParams.update({
@@ -218,10 +218,17 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     plt.show()
     plt.savefig(f"transient/Z heatmap({'real' if err==False else 'dont-use'}).pdf")
 #///////////////////////////////////////////////////////////////////////////////// calulcations for min mass and width
-    coords = np.column_stack((y, x))
-    def chi_func_try(mi,wi):
-        return float(griddata(coords,values=z,xi=(mi,wi),method='cubic'))
-    m = Minuit(chi_func_try, 90.6, 2.4)
+
+    t_width=np.array([1,2,3,1,2,3,1,2,3])
+    t_mass=np.array([90.5,90.5,90.5,91,91,91,91.5,91.5,91.5])
+    t_data=np.array([simHist_scaled905_1,simHist_scaled905_2,simHist_scaled905_3,simHist_scaled91_1,simHist_scaled91_2,simHist_scaled91_3,simHist_scaled915_1,simHist_scaled915_2,simHist_scaled915_3])
+    coords = np.column_stack([t_mass,t_width])
+    templates=np.array(t_data)
+
+    def interpolate_chi_func(mass_value,width_value):
+        interpolate_template=griddata(coords,templates,(mass_value,width_value),method='cubic')
+        return np.sum(((dataHist-interpolate_template)**2)/interpolate_template)          # the Minuit doesnt seem to work without passign a fucntion through it 
+    m = Minuit(interpolate_chi_func, 90.6, 2.4)
     m.migrad()
     print(m.values)
     print("Chi^2 mini:", m.fval)
