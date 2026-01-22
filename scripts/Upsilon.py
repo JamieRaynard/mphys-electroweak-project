@@ -80,7 +80,7 @@ def PlotHistogram(mass,filename,Output=None):
 
     plt.legend()
     plt.xlabel("Mass / GeV")
-    plt.ylabel("Frequency Density")
+    plt.ylabel("Counts")
     plt.title(f"Reconstructed Upsilon {filename}")
     plt.savefig(f"transient/Upsilon_mass_{filename}.png")
     plt.clf()
