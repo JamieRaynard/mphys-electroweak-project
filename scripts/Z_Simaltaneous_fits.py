@@ -183,31 +183,18 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
         # the Minuit doesnt seem to work without passign a fucntion through it 
     m = Minuit(interpolate_chi_func, 90.6, 2.4)
     m.migrad()
-    results=m.values
-    print(m.values)
+    m.hesse()
+    mass_result=m.values["mass_value"]
+    width_result=m.values["width_value"]
+    mass_error=m.errors["mass_value"]
+    width_error=m.errors["width_value"]
+    covariance_matrix=m.covariance
+    corelation_coefficient=(m.covariance["mass_value", "width_value"]) /(width_error*mass_error)
+    print(f" the mass is {mass_result} ± {mass_error}" )
     print("Chi^2 mini:", m.fval)
-    # connect to sql and 
-    sql_connect = sqlite3.connect("mass_width_results.db")
-    cursor_excecute = sql_connect.cursor()
-    cursor_excecute.execute("""
-    CREATE TABLE IF NOT EXISTS runs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp TEXT,
-        mass REAL,
-        width REAL,
-        comment TEXT
-    )
-    """)
-    value1 = results["mass_value"]
-    value2 = results["width_value"]
-    comment = "initial test run"
-    cursor_excecute.execute("""
-    INSERT INTO runs (timestamp, mass, width, comment)
-    VALUES (?, ?, ?, ?)
-    """, (datetime.now().isoformat(), value1, value2, comment))
-    sql_connect.commit()
-    sql_connect.close()
-    #to read the table   sqlite3 results.db      SELECT * FROM runs;   .headers on space .mode column space SELECT * FROM runs;   .quit to exit
+    print(f"the width is {width_result} ± {width_error}")
+    print(covariance_matrix)
+    print(f"corelation is {corelation_coefficient}")
 
 
 sim_fits(tmass,simdatam,datam,C_rat,False)
