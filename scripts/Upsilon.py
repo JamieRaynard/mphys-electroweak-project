@@ -16,8 +16,8 @@ def ResFit(x,total,mean,sd,A,B):
 #This Crystal Ball Fuction better encapsulates the QED radiative tail on the left side of the curve
 #from scipy.stats documentation crystallball(x,beta,m): x = (x-mean)/sd
 #Needed the loc and scale to act analogous to the mean and sd in a Gaussian
-def CrystalBallFit(x,beta,m,loc,scale,A,B):
-    return crystalball.pdf(x,beta,m,loc=loc,scale=scale) + A*np.exp(-B*x)
+def CrystalBallFit(x,beta,m,loc,scale,N,A,B,binwidth):
+    return (N*crystalball.pdf(x,beta,m,loc=loc,scale=scale) + A*np.exp(-B*x))*binwidth
 
 def GetBranches(loc,calibration_factor=1):
     MUON_MASS = 0.1057
@@ -58,23 +58,21 @@ def Reconstruct(mup_P,mum_P,mup_E,mum_E):
 
 #loc and smear are just variables to determine the file name the graph will be saved under
 def PlotHistogram(mass,filename,Output=None):
-    massHist,bins,_ = plt.hist(mass,bins=100,range=(9.200,9.750),histtype='step',label="Upsilon mass",density=True)
+    massHist,bins,_ = plt.hist(mass,bins=100,range=(9.200,9.750),histtype='step',label="Upsilon mass")
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
         binlist.append(binlist[-1]+binwidth)
     bincenters = np.array(binlist)
-    
-    #Gaussian fit:
-    #fitParam,_ = curve_fit(ResFit,bincenters,massHist,p0=[1.0, 9.46, 0.04, 0.5, 0.001],bounds=([0, 9.4, 0.018, 0, 0],[30.0, 9.5, 0.1, 10.0, 1e3]),maxfev=10000)
-    #model = ResFit(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
-    #plt.plot(bincenters,model,label=r'$ Ae^{-bx}+\mathrm{Gauss}(T,\bar{x},\sigma) $')
+    N_tot = np.sum(massHist)
 
     #Crystal Ball fit:
-    fitParam,cov = (curve_fit(CrystalBallFit,bincenters,massHist,p0=[1.75,2.5,9.45,1e-3,0.0,0.0],bounds=([0.0,0.0,9.4,1e-5,0.0,0.0],[10.0,5.0,9.5,2.0,30.0,10.0]),maxfev=10000))
+    p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,2.97336500e+06,1.5e6,9.9e-5]
+    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0], [5.0, 10.0, 9.50, 0.10,  N_tot, 3e7, 1.0])
+    fitParam, cov = curve_fit(lambda x, beta, m, loc, scale, Ns, A, B: CrystalBallFit(x, beta, m, loc, scale, Ns, A, B, binwidth), bincenters, massHist, p0=p0, bounds=bounds, maxfev=100000)
     err = np.sqrt(np.diag(cov))
     print(fitParam,"\n",err)
-    model = CrystalBallFit(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5])
+    model = CrystalBallFit(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5],fitParam[6],binwidth)
     plt.plot(bincenters,model,label="Crystall Ball function\nWith Background")
     #A more accurate fit could be a double tailed crystal ball
     
@@ -84,14 +82,16 @@ def PlotHistogram(mass,filename,Output=None):
     plt.xlabel("Mass / GeV")
     plt.ylabel("Frequency Density")
     plt.title(f"Reconstructed Upsilon {filename}")
-    plt.savefig(f"transient/Upsilon_mass_{filename}.pdf")
+    plt.savefig(f"transient/Upsilon_mass_{filename}.png")
     plt.clf()
 
     if Output:
         #At the moment these are the only values I use but can add others (e.g. for A and B for background) easily here
         outputvalues = {
             "mass": (fitParam[2],err[2]),
-            "width": (fitParam[3],err[3])
+            "width": (fitParam[3],err[3]),
+            "A": (fitParam[4],err[4]),
+            "B": (fitParam[5],err[5])
         }
         return (outputvalues)
     else:
@@ -104,10 +104,12 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     for i in range(1,(len(bins)-1)):
         binlist.append(binlist[-1]+binwidth)
     bincenters = np.array(binlist)
-    plt.scatter(bincenters, data_massHist, label = "Data", s=5 ,c='black')
 
     #(Probably too) simplistic model for the background of just a flat uniform dist.
-    background = np.min(data_massHist)
+    #background = np.min(data_massHist)
+
+    fitParam = PlotHistogram(data_mass,'DATA_fit',Output=True)
+    background = fitParam["A"][0]*np.exp(-1*float(fitParam["B"][0])*bincenters)
 
     unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.25,9.75)))
     scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.25,9.75)))
@@ -122,17 +124,23 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     data_massHist = data_massHist - background
     unscaled_sim_massHist = unscaled_sim_massHist * (np.sum(data_massHist)/np.sum(unscaled_sim_massHist))
     scaled_sim_massHist = scaled_sim_massHist * (np.sum(data_massHist)/np.sum(scaled_sim_massHist))
-    data_massHist = data_massHist + background
-    unscaled_sim_massHist = unscaled_sim_massHist + background
-    scaled_sim_massHist = scaled_sim_massHist + background
     
+    data_massHist = data_massHist + background
 
-    plt.step(bincenters,unscaled_sim_massHist,label="Sim without smearing")
-    plt.step(bincenters,scaled_sim_massHist, label = "sim with smearing")
+    plt.scatter(bincenters, data_massHist, label = "Data", s=5 ,c='black')
+    plt.bar(bincenters, background, width=binwidth, label="Background", color="lightgray", align="center")
+    plt.bar(bincenters, scaled_sim_massHist, width=binwidth,bottom=background,label="Sim with smearing",color="white",edgecolor="orange",align="center")
+    plt.bar(bincenters, unscaled_sim_massHist, width=binwidth,bottom=background,label="Sim without smearing",color="white",edgecolor="blue",align="center")
+
+    # unscaled_sim_massHist = unscaled_sim_massHist + background
+    # scaled_sim_massHist = scaled_sim_massHist + background
+    # plt.step(bincenters,unscaled_sim_massHist,label="Sim without smearing")
+    # plt.step(bincenters,scaled_sim_massHist, label = "sim with smearing")
 
     plt.legend()
     plt.xlabel("Mass / GeV")
     plt.ylabel("Counts")
+    plt.ylim(bottom=0)
     plt.title(r"Comparing the effect of momentum smearing")
     plt.savefig(f"transient/Upsilon_mass_comparisson.png")
     plt.clf()
