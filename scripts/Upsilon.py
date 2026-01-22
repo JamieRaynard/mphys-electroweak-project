@@ -98,7 +98,7 @@ def PlotHistogram(mass,filename,Output=None):
         return 0
 
 def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
-    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.25,9.75),density=True)
+    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.25,9.75))
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -109,17 +109,32 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     #(Probably too) simplistic model for the background of just a flat uniform dist.
     background = np.min(data_massHist)
 
-    unscaled_sim_massHist,bins = np.histogram(unscaled_sim_mass, bins=100, range=(9.25,9.75),density=True)
-    plt.step(bincenters,unscaled_sim_massHist+background,label="Sim without smearing")
+    unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.25,9.75)))
+    scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.25,9.75)))
 
-    scaled_simHist,bins = np.histogram(scaled_sim_mass, bins = 100, range = (9.25,9.75),density=True)
-    plt.step(bincenters,scaled_simHist+background, label = "sim with smearing")
+    #Original
+    # unscaled_sim_massHist = unscaled_sim_massHist + background*(np.sum(unscaled_sim_massHist)/np.sum(data_massHist))
+    # scaled_sim_massHist = scaled_sim_massHist + background*(np.sum(scaled_sim_massHist)/np.sum(data_massHist))
+    # unscaled_sim_massHist = unscaled_sim_massHist * (np.sum(data_massHist)/np.sum(unscaled_sim_massHist))
+    # scaled_sim_massHist = scaled_sim_massHist * (np.sum(data_massHist)/np.sum(scaled_sim_massHist))
+
+    #Idea:
+    data_massHist = data_massHist - background
+    unscaled_sim_massHist = unscaled_sim_massHist * (np.sum(data_massHist)/np.sum(unscaled_sim_massHist))
+    scaled_sim_massHist = scaled_sim_massHist * (np.sum(data_massHist)/np.sum(scaled_sim_massHist))
+    data_massHist = data_massHist + background
+    unscaled_sim_massHist = unscaled_sim_massHist + background
+    scaled_sim_massHist = scaled_sim_massHist + background
+    
+
+    plt.step(bincenters,unscaled_sim_massHist,label="Sim without smearing")
+    plt.step(bincenters,scaled_sim_massHist, label = "sim with smearing")
 
     plt.legend()
     plt.xlabel("Mass / GeV")
-    plt.ylabel("Frequency Density")
+    plt.ylabel("Counts")
     plt.title(r"Comparing the effect of momentum smearing")
-    plt.savefig(f"transient/Upsilon_mass_comparisson_notitle.png")
+    plt.savefig(f"transient/Upsilon_mass_comparisson.png")
     plt.clf()
     return 0
 
@@ -173,7 +188,8 @@ def CalcC(alpha_s,alpha_d):
 
 def width_chi2(sigma,width_data,width_data_err,mup_P_orig,mum_P_orig,mup_E,mum_E):
     #Outdated: need to recalculate the mup_E and mum_E with smearing
-    global Norm_rand
+    rng = np.random.default_rng(seed=10)
+    Norm_rand = rng.normal(0,1,size=len(mum_E))
     factor = 1+Norm_rand*sigma
     mup_P = mup_P_orig*factor
     mum_P = mum_P_orig*factor
