@@ -224,7 +224,7 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
 
     with open(fname, "w") as f:
         f.write(f"{mass_result}\n")
-        f.write(f"{width_result}\n")
+        f.write(f"{width_result}")
     f.close()
     # plotting the stack graph with similtanous fits
     #the top half.
