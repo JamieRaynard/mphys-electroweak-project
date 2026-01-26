@@ -19,20 +19,9 @@ from datetime import datetime
 parser = argparse.ArgumentParser(description='some string')
 #Run with --Callibration="TRUE" to use callibration
 parser.add_argument('--Calibration',default="FALSE",type=str)
+parser.add_argument('--Smear_error',default="NONE",type=str,choices=["PLUS", "MINUS", "NONE"])
+parser.add_argument('--C_ratio_error',default="NONE",type=str,choices=["PLUS", "MINUS", "NONE"])
 args = parser.parse_args()
-if (args.Calibration).lower() == "true":
-    try:
-        with open("Calibration_output.json",) as InputFile:
-            C_rat,C_err =  load(InputFile)["C_ratio"]
-        print(f'Woo we imported {C_rat} ± {C_err}')
-    except FileNotFoundError:
-        print("Please run the script Upsilon.py first to get a calibration value")
-        #This is where I would return to stop the script if we were inside a main func to avoid error
-        C_rat,C_err = 1,0
-else:
-    C_rat = 1
-    C_err = 0
-
 
 DATAIR="/storage/epp2/phshgg/Public/MPhysProject_2025_2026/tuples/1/"
 with uproot.open(f"{DATAIR}/DecayTree__Z__Z__d13600GeV_24c4.root:DecayTree") as t:
@@ -47,6 +36,43 @@ with uproot.open(f"{DATAIR}/DecayTree__Z__DATA__d13600GeV_24c4.root:DecayTree") 
 
     #momentasim = t.arrays(["mup_PX","mup_PY","mup_PZ","mum_PX" ,"mum_PY" ,"mum_PZ"],library="np")
     datam=tt.arrays(["mum_eta","mum_phi","mum_pt","mup_eta" ,"mup_phi" ,"mup_pt"],library="np")
+
+if (args.Calibration).lower() == "true":
+    try:
+        with open("Calibration_output.json",) as InputFile:
+            json_data=load(InputFile)
+        C_rat,C_err =  json_data["C_ratio"]
+        Smear_factor,Smear_factor_error = json_data["Smear_factor"]
+        print(f'Woo we imported C_ratio to be {C_rat} ± {C_err}')
+        print(f'Woo we imported smear factor to be {Smear_factor} ± {Smear_factor_error}')
+
+        if (args.Smear_error).lower() == "plus":
+            Smear_factor=Smear_factor+Smear_factor_error
+            fname = f"smear_plus.txt"
+        elif (args.Smear_error).lower() == "minus":
+            Smear_factor=Smear_factor-Smear_factor_error
+            fname = f"smear_minus.txt"
+        if (args.C_ratio_error).lower() == "plus":
+            C_rat=C_rat+C_err
+            fname = f"C_rat_plus.txt"
+        elif (args.C_ratio_error).lower() == "minus":
+            C_rat=C_rat-C_err
+            fname = f"C_rat_minus.txt"
+        
+        rng = np.random.default_rng(seed=10)
+        Norm_rand = rng.normal(0,1,size=len(tmass))
+        alpha = 1 - C_rat
+        calibration_factor = 1+alpha+Norm_rand*Smear_factor
+
+        print(f'Woo the correction is now  {calibration_factor}')
+
+    except FileNotFoundError:
+        print("Please run the script Upsilon.py first to get a calibration value")
+        #This is where I would return to stop the script if we were inside a main func to avoid error
+        calibration_factor=1
+else:
+    calibration_factor = 1
+
 
 
 def conaeq(reconmass,cal):
@@ -80,8 +106,8 @@ def fiteq(x,a,b,m,w,scale):
     f= ((k/((x**2-m**2)**2+(m**2)*w**2))*scale  + a*np.exp(b*x))  # i can just do this manually
     return f
 
-def sim_fits(tmass,simdatam,datam,calibrate,err):
-    c=calibrate #error in calibration
+def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
+    c=calibration_factor #error in calibration
     dataHist,databinn,_d=plt.hist(conaeq(datam,1), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
     trmassHist,binn,_t=plt.hist(tmass, bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-true",density=True,linewidth=1) #for true mass
     centers=0.5*(binn[1:]+binn[:-1])
@@ -146,11 +172,11 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     plt.plot(centers, simHist_scaled905_3, '-', linewidth=2, label='scaled-weighted 90.5_3 simulation')
     plt.plot(centers, simHist_scaled91_3, '-', linewidth=2, label='scaled-weighted 91_3 simulation')
     plt.plot(centers, simHist_scaled915_3, '-', linewidth=2, label='scaled-weighted 91.5_3 simulation')
-    plt.title(f"Zreconstructed weight sim ({'real' if err==True else 'dont-use'})")
+    plt.title(f"Zreconstructed weight sim ({'real' if use_diagram==True else 'dont-use'})")
     plt.xlabel("Mass_Gev")
     plt.ylabel("Frequency Density")
     plt.legend(loc='upper right')
-    plt.savefig(f"transient/Zreconstructed weight sim-combined_mess ({'real' if err==False else 'dont-use'}).pdf")
+    plt.savefig(f"transient/Zreconstructed weight sim-combined_mess ({'real' if use_diagram==True else 'dont-use'}).pdf")
     plt.clf()
     plt.figure()
     chi905_1=np.sum(((dataHist-simHist_scaled905_1)**2)/dataHist)
@@ -195,6 +221,11 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     print(f"the width is {width_result} ± {width_error}")
     print(covariance_matrix)
     print(f"corelation is {corelation_coefficient}")
+
+    with open(fname, "w") as f:
+        f.write(f"{mass_result}\n")
+        f.write(f"{width_result}\n")
+    f.close()
     # plotting the stack graph with similtanous fits
     #the top half.
 
@@ -240,4 +271,4 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     ax2.legend(loc='upper left',frameon=True, fontsize=8)
     plt.savefig("transient/Z-stack_similtaneous.pdf")
     print(chi_values)
-sim_fits(tmass,simdatam,datam,C_rat,False)
+sim_fits(tmass,simdatam,datam,calibration_factor,False)
