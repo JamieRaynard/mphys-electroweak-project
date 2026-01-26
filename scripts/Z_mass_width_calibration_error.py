@@ -12,12 +12,12 @@ print(Sp)
 smear_mass_error=(Sm[0]-Sp[0])/2
 smear_width_error=(Sm[1]-Sp[1])/2
 
-fname3 = "../mphys-electroweak-project/smear_minus.txt"
+fname3 = "../mphys-electroweak-project/C_rat_minus.txt"
 Sm = np.loadtxt(fname3, dtype=float)
 print(Sm)
 
 
-fname4 = "../mphys-electroweak-project/smear_plus.txt"
+fname4 = "../mphys-electroweak-project/C_rat_plus.txt"
 Sp = np.loadtxt(fname4, dtype=float)
 print(Sp)
 
