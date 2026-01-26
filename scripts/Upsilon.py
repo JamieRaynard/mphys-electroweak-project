@@ -129,9 +129,9 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     data_massHist = data_massHist + background
 
     plt.bar(bincenters, background, width=binwidth, label="Background", color="lightgray", align="center")
-    plt.bar(bincenters, unscaled_sim_massHist, width=binwidth,bottom=background,label="Sim without smearing",color="white",edgecolor="blue",align="center",alpha=0.7)
-    plt.bar(bincenters, scaled_sim_massHist, width=binwidth,bottom=background,label="Sim with smearing",color="white",edgecolor="orange",align="center",alpha=0.7)
-    plt.scatter(bincenters, data_massHist, label = "Data", s=5 ,c='black')
+    plt.step(bincenters, unscaled_sim_massHist+background,where="mid",label="Sim without smearing",color="blue",zorder=2)
+    plt.step(bincenters, scaled_sim_massHist+background, where="mid", label="Sim with smearing",color="orange",zorder=2)
+    plt.scatter(bincenters, data_massHist, label = "Data", s=5 ,c='black',zorder=3)
 
     # unscaled_sim_massHist = unscaled_sim_massHist + background
     # scaled_sim_massHist = scaled_sim_massHist + background
@@ -145,6 +145,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     plt.title(r"Comparing the effect of momentum smearing")
     plt.savefig(f"transient/Upsilon_mass_comparisson.png")
     plt.clf()
+
     return 0
 
 def Comparing():
