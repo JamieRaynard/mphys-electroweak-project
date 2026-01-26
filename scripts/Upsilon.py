@@ -65,10 +65,11 @@ def PlotHistogram(mass,filename,Output=None):
         binlist.append(binlist[-1]+binwidth)
     bincenters = np.array(binlist)
     N_tot = np.sum(massHist)
+    
 
     #Crystal Ball fit:
-    p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,2.97336500e+06,1.5e6,9.9e-5]
-    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0], [5.0, 10.0, 9.50, 0.10,  N_tot, 3e7, 1.0])
+    p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,N_tot,0.5*N_tot,9.9e-5]
+    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0], [5.0, 10.0, 9.50, 0.10,  N_tot, 10*N_tot, 1.0])
     fitParam, cov = curve_fit(lambda x, beta, m, loc, scale, Ns, A, B: CrystalBallFit(x, beta, m, loc, scale, Ns, A, B, binwidth), bincenters, massHist, p0=p0, bounds=bounds, maxfev=100000)
     err = np.sqrt(np.diag(cov))
     print(fitParam,"\n",err)
@@ -76,7 +77,7 @@ def PlotHistogram(mass,filename,Output=None):
     plt.plot(bincenters,model,label="Crystall Ball function\nWith Background")
     #A more accurate fit could be a double tailed crystal ball
     
-    #print(f'Saving plot to transient/Upsilon_mass{filename}.pdf')
+    print(f'Saving plot to transient/Upsilon_mass{filename}.pdf')
 
     plt.legend()
     plt.xlabel("Mass / GeV")
@@ -90,8 +91,8 @@ def PlotHistogram(mass,filename,Output=None):
         outputvalues = {
             "mass": (fitParam[2],err[2]),
             "width": (fitParam[3],err[3]),
-            "A": (fitParam[4],err[4]),
-            "B": (fitParam[5],err[5])
+            "A": (fitParam[5],err[5]),
+            "B": (fitParam[6],err[6])
         }
         return (outputvalues)
     else:
@@ -109,7 +110,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     #background = np.min(data_massHist)
 
     fitParam = PlotHistogram(data_mass,'DATA_fit',Output=True)
-    background = fitParam["A"][0]*np.exp(-1*float(fitParam["B"][0])*bincenters)
+    background = fitParam["A"][0]*np.exp(-1*float(fitParam["B"][0])*bincenters)*binwidth
 
     unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.25,9.75)))
     scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.25,9.75)))
@@ -127,10 +128,10 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     
     data_massHist = data_massHist + background
 
-    plt.scatter(bincenters, data_massHist, label = "Data", s=5 ,c='black')
     plt.bar(bincenters, background, width=binwidth, label="Background", color="lightgray", align="center")
-    plt.bar(bincenters, scaled_sim_massHist, width=binwidth,bottom=background,label="Sim with smearing",color="white",edgecolor="orange",align="center")
-    plt.bar(bincenters, unscaled_sim_massHist, width=binwidth,bottom=background,label="Sim without smearing",color="white",edgecolor="blue",align="center")
+    plt.bar(bincenters, unscaled_sim_massHist, width=binwidth,bottom=background,label="Sim without smearing",color="white",edgecolor="blue",align="center",alpha=0.7)
+    plt.bar(bincenters, scaled_sim_massHist, width=binwidth,bottom=background,label="Sim with smearing",color="white",edgecolor="orange",align="center",alpha=0.7)
+    plt.scatter(bincenters, data_massHist, label = "Data", s=5 ,c='black')
 
     # unscaled_sim_massHist = unscaled_sim_massHist + background
     # scaled_sim_massHist = scaled_sim_massHist + background
