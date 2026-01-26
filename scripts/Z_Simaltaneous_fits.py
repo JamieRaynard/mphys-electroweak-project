@@ -195,6 +195,49 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     print(f"the width is {width_result} ± {width_error}")
     print(covariance_matrix)
     print(f"corelation is {corelation_coefficient}")
+    # plotting the stack graph with similtanous fits
+    #the top half.
 
+    dataerrors=np.sqrt(dataHist)
 
+    plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["Times New Roman", "Times", "STIX"],    # this is making the graphs look like PRL
+    "mathtext.fontset": "stix",
+    "font.size": 12,
+})
+    plt.rcParams.update({
+    "lines.linewidth": 1.2,
+    "lines.markersize": 4,
+    "axes.linewidth": 0.8,
+})
+    plt.figure()
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(6, 6),
+                                   gridspec_kw={'hspace': 0.05})
+    
+    #top
+   # ax1.scatter(centers,dataHist ,label='data ',color="black",s=10)
+    ax1.errorbar(centers, dataHist, yerr=dataerrors,label='Data ',color="black",fmt=".",markersize=2.5 )
+    ax1.step(centers, simHist_scaled91_2, '-', linewidth=2,where='mid', label='91 Gev mass 2 Gev width template')
+    ax1.set_ylabel("Frequency")
+    ax1.legend(loc='upper left',frameon=True, fontsize=8)
+
+    # bottom
+    ratio_91_3_91_2=simHist_scaled91_3/simHist_scaled91_2
+    ratio_91_2_91_2=simHist_scaled91_2/simHist_scaled91_2
+    ratio_915_91_2=simHist_scaled915_2/simHist_scaled91_2
+
+    ratio_data_91_2=dataHist/simHist_scaled91_2
+    ratioerror=ratio_data_91_2*dataerrors/dataHist
+    #ax2.scatter(centers,ratio_data_91,label='data ',color="black",s=10)
+    ax2.errorbar(centers, ratio_data_91_2, yerr=ratioerror,label='Data/91_2 Gev template ',color="black",fmt=".",markersize=2.5 )
+    ax2.step(centers, ratio_91_3_91_2, '-', linewidth=2,where='mid', label='91_3/91_2 Gev template ratio')
+    ax2.step(centers, ratio_91_2_91_2, '-', linewidth=2,where='mid', label='91_2/91_2_2 Gev template ratio')
+    ax2.step(centers, ratio_915_91_2, '-', linewidth=2,where='mid', label='91.5_2/91_2 Gev template ratio')
+    ax2.set_ylabel("Ratio")
+    ax2.set_xlabel("Dimuon mass GeV")
+    ax2.set_ylim(bottom=0.8)
+    ax2.legend(loc='upper left',frameon=True, fontsize=8)
+    plt.savefig("transient/Z-stack_similtaneous.pdf")
+    print(chi_values)
 sim_fits(tmass,simdatam,datam,C_rat,False)
