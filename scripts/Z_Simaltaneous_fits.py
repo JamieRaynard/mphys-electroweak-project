@@ -10,26 +10,18 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import griddata
 from scipy.interpolate import CubicSpline
 from matplotlib.colors import ListedColormap
+from iminuit import Minuit
+import sqlite3
+from datetime import datetime
 #where is the main function? :(
 
 #This allows for me to pass arguments in to the terminal to change important paramters without changing the code
 parser = argparse.ArgumentParser(description='some string')
 #Run with --Callibration="TRUE" to use callibration
 parser.add_argument('--Calibration',default="FALSE",type=str)
+parser.add_argument('--Smear_error',default="NONE",type=str,choices=["PLUS", "MINUS", "NONE"])
+parser.add_argument('--C_ratio_error',default="NONE",type=str,choices=["PLUS", "MINUS", "NONE"])
 args = parser.parse_args()
-if (args.Calibration).lower() == "true":
-    try:
-        with open("C_ratio.json",) as InputFile:
-            C_rat,C_err =  load(InputFile)["C_ratio"]
-        print(f'Woo we imported {C_rat} ± {C_err}')
-    except FileNotFoundError:
-        print("Please run the script Upsilon.py first to get a calibration value")
-        #This is where I would return to stop the script if we were inside a main func to avoid error
-        C_rat,C_err = 1,0
-else:
-    C_rat = 1
-    C_err = 0
-
 
 DATAIR="/storage/epp2/phshgg/Public/MPhysProject_2025_2026/tuples/1/"
 with uproot.open(f"{DATAIR}/DecayTree__Z__Z__d13600GeV_24c4.root:DecayTree") as t:
@@ -44,6 +36,43 @@ with uproot.open(f"{DATAIR}/DecayTree__Z__DATA__d13600GeV_24c4.root:DecayTree") 
 
     #momentasim = t.arrays(["mup_PX","mup_PY","mup_PZ","mum_PX" ,"mum_PY" ,"mum_PZ"],library="np")
     datam=tt.arrays(["mum_eta","mum_phi","mum_pt","mup_eta" ,"mup_phi" ,"mup_pt"],library="np")
+
+if (args.Calibration).lower() == "true":
+    try:
+        with open("Calibration_output.json",) as InputFile:
+            json_data=load(InputFile)
+        C_rat,C_err =  json_data["C_ratio"]
+        Smear_factor,Smear_factor_error = json_data["Smear_factor"]
+        print(f'Woo we imported C_ratio to be {C_rat} ± {C_err}')
+        print(f'Woo we imported smear factor to be {Smear_factor} ± {Smear_factor_error}')
+
+        if (args.Smear_error).lower() == "plus":
+            Smear_factor=Smear_factor+Smear_factor_error
+            fname = f"smear_plus.txt"
+        elif (args.Smear_error).lower() == "minus":
+            Smear_factor=Smear_factor-Smear_factor_error
+            fname = f"smear_minus.txt"
+        if (args.C_ratio_error).lower() == "plus":
+            C_rat=C_rat+C_err
+            fname = f"C_rat_plus.txt"
+        elif (args.C_ratio_error).lower() == "minus":
+            C_rat=C_rat-C_err
+            fname = f"C_rat_minus.txt"
+        
+        rng = np.random.default_rng(seed=10)
+        Norm_rand = rng.normal(0,1,size=len(tmass))
+        alpha = 1 - C_rat
+        calibration_factor = 1+alpha+Norm_rand*Smear_factor
+
+        print(f'Woo the correction is now  {calibration_factor}')
+
+    except FileNotFoundError:
+        print("Please run the script Upsilon.py first to get a calibration value")
+        #This is where I would return to stop the script if we were inside a main func to avoid error
+        calibration_factor=1
+else:
+    calibration_factor = 1
+
 
 
 def conaeq(reconmass,cal):
@@ -77,8 +106,8 @@ def fiteq(x,a,b,m,w,scale):
     f= ((k/((x**2-m**2)**2+(m**2)*w**2))*scale  + a*np.exp(b*x))  # i can just do this manually
     return f
 
-def sim_fits(tmass,simdatam,datam,calibrate,err):
-    c=calibrate #error in calibration
+def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
+    c=calibration_factor #error in calibration
     dataHist,databinn,_d=plt.hist(conaeq(datam,1), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
     trmassHist,binn,_t=plt.hist(tmass, bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-true",density=True,linewidth=1) #for true mass
     centers=0.5*(binn[1:]+binn[:-1])
@@ -143,11 +172,11 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     plt.plot(centers, simHist_scaled905_3, '-', linewidth=2, label='scaled-weighted 90.5_3 simulation')
     plt.plot(centers, simHist_scaled91_3, '-', linewidth=2, label='scaled-weighted 91_3 simulation')
     plt.plot(centers, simHist_scaled915_3, '-', linewidth=2, label='scaled-weighted 91.5_3 simulation')
-    plt.title(f"Zreconstructed weight sim ({'real' if err==True else 'dont-use'})")
+    plt.title(f"Zreconstructed weight sim ({'real' if use_diagram==True else 'dont-use'})")
     plt.xlabel("Mass_Gev")
     plt.ylabel("Frequency Density")
     plt.legend(loc='upper right')
-    plt.savefig(f"transient/Zreconstructed weight sim-combined_mess ({'real' if err==False else 'dont-use'}).pdf")
+    plt.savefig(f"transient/Zreconstructed weight sim-combined_mess ({'real' if use_diagram==True else 'dont-use'}).pdf")
     plt.clf()
     plt.figure()
     chi905_1=np.sum(((dataHist-simHist_scaled905_1)**2)/dataHist)
@@ -161,41 +190,47 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     chi915_1=np.sum(((dataHist-simHist_scaled915_1)**2)/dataHist)
     chi915_2=np.sum(((dataHist-simHist_scaled915_2)**2)/dataHist)
     chi915_3=np.sum(((dataHist-simHist_scaled915_3)**2)/dataHist)
+
     x=np.array([1,2,3,1,2,3,1,2,3])
     y=np.array([90.5,90.5,90.5,91,91,91,91.5,91.5,91.5])
-    z=np.array([chi905_1,chi905_2,chi905_3,chi91_1,chi91_2,chi91_3,chi915_1,chi915_2,chi915_3])
-    #xi = np.linspace(x.min()-0.1, x.max()+0.1, 100)
-   # yi = np.linspace(y.min()-0.1, y.max()+0.1, 100)
-    #X, Y = np.meshgrid(xi, yi)
-    #Z = griddata((x, y), z, (X, Y), method='cubic')
-    t = np.arange(len(x))  
-    cs_x = CubicSpline(t, x)
-    cs_y = CubicSpline(t, y)
-    cs_z = CubicSpline(t, z)
-    t_fine = np.linspace(t.min(), t.max(), 200)
-    x_fine = cs_x(t_fine)
-    y_fine = cs_y(t_fine)
-    z_fine = cs_z(t_fine)
-    fig = plt.figure()
+    chi_values=np.array([chi905_1,chi905_2,chi905_3,chi91_1,chi91_2,chi91_3,chi915_1,chi915_2,chi915_3])
 
-    ax = fig.add_subplot(111, projection='3d')
-    #ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8)
-    ax.plot(x_fine, y_fine, z_fine, color='blue', label='Cubic Spline line')
-    ax.scatter(x, y, z,color="red",label="data")
-    ax.set_xlabel("target width")
-    ax.set_ylabel("target mass")
-    ax.set_zlabel("chi²")
-    ax.legend()
-    plt.savefig(f"transient/Z width+mass CHI({'real' if err==False else 'dont-use'}).pdf")
+    t_width=np.array([1,2,3,1,2,3,1,2,3])
+    t_mass=np.array([90.5,90.5,90.5,91,91,91,91.5,91.5,91.5])
+    t_data=np.array([simHist_scaled905_1,simHist_scaled905_2,simHist_scaled905_3,simHist_scaled91_1,simHist_scaled91_2,simHist_scaled91_3,simHist_scaled915_1,simHist_scaled915_2,simHist_scaled915_3])
+    coords = np.column_stack([t_mass,t_width])
+    templates=np.array(t_data)
 
-    xi = np.linspace(x.min(), x.max(), 200)#////////////////////////////////////////////this is where the heatmap coems in and hence the claulations for min ti find mass and width
-    yi = np.linspace(y.min(), y.max(), 200)
-    Xi, Yi = np.meshgrid(xi, yi)
+    def interpolate_chi_func(mass_value,width_value):
+        interpolate_template=griddata(coords,templates,(mass_value,width_value),method='linear')
+        return np.sum(((dataHist-interpolate_template)**2)/interpolate_template) 
+    
+#///////////////////////////////////////////////////////////////////////////////// calulcations for min mass and width
+        # the Minuit doesnt seem to work without passign a fucntion through it 
+    m = Minuit(interpolate_chi_func, 90.6, 2.4)
+    m.migrad()
+    m.hesse()
+    mass_result=m.values["mass_value"]
+    width_result=m.values["width_value"]
+    mass_error=m.errors["mass_value"]
+    width_error=m.errors["width_value"]
+    covariance_matrix=m.covariance
+    corelation_coefficient=(m.covariance["mass_value", "width_value"]) /(width_error*mass_error)
+    print(f" the mass is {mass_result} ± {mass_error}" )
+    print("Chi^2 mini:", m.fval)
+    print(f"the width is {width_result} ± {width_error}")
+    print(covariance_matrix)
+    print(f"corelation is {corelation_coefficient}")
 
+    with open(fname, "w") as f:
+        f.write(f"{mass_result}\n")
+        f.write(f"{width_result}")
+    f.close()
+    # plotting the stack graph with similtanous fits
+    #the top half.
 
-    Zi = griddata((x, y),z,(Xi, Yi),method='linear')
+    dataerrors=np.sqrt(dataHist)
 
-    cmap =ListedColormap(["blue","green"])
     plt.rcParams.update({
     "font.family": "serif",
     "font.serif": ["Times New Roman", "Times", "STIX"],    # this is making the graphs look like PRL
@@ -208,11 +243,32 @@ def sim_fits(tmass,simdatam,datam,calibrate,err):
     "axes.linewidth": 0.8,
 })
     plt.figure()
-    plt.pcolormesh(Xi, Yi, Zi,edgecolors='face', shading='auto',cmap='Blues_r')
-    plt.xlabel("Template width GeV")
-    plt.ylabel("Template mass GeV")
-    plt.colorbar(label="χ^2")
-    plt.show()
-    plt.savefig(f"transient/Z heatmap({'real' if err==False else 'dont-use'}).pdf")
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(6, 6),
+                                   gridspec_kw={'hspace': 0.05})
+    
+    #top
+   # ax1.scatter(centers,dataHist ,label='data ',color="black",s=10)
+    ax1.errorbar(centers, dataHist, yerr=dataerrors,label='Data ',color="black",fmt=".",markersize=2.5 )
+    ax1.step(centers, simHist_scaled91_2, '-', linewidth=2,where='mid', label='91 Gev mass 2 Gev width template')
+    ax1.set_ylabel("Frequency")
+    ax1.legend(loc='upper left',frameon=True, fontsize=8)
 
-sim_fits(tmass,simdatam,datam,C_rat,False)
+    # bottom
+    ratio_91_3_91_2=simHist_scaled91_3/simHist_scaled91_2
+    ratio_91_2_91_2=simHist_scaled91_2/simHist_scaled91_2
+    ratio_915_91_2=simHist_scaled915_2/simHist_scaled91_2
+
+    ratio_data_91_2=dataHist/simHist_scaled91_2
+    ratioerror=ratio_data_91_2*dataerrors/dataHist
+    #ax2.scatter(centers,ratio_data_91,label='data ',color="black",s=10)
+    ax2.errorbar(centers, ratio_data_91_2, yerr=ratioerror,label='Data/91_2 Gev template ',color="black",fmt=".",markersize=2.5 )
+    ax2.step(centers, ratio_91_3_91_2, '-', linewidth=2,where='mid', label='91_3/91_2 Gev template ratio')
+    ax2.step(centers, ratio_91_2_91_2, '-', linewidth=2,where='mid', label='91_2/91_2_2 Gev template ratio')
+    ax2.step(centers, ratio_915_91_2, '-', linewidth=2,where='mid', label='91.5_2/91_2 Gev template ratio')
+    ax2.set_ylabel("Ratio")
+    ax2.set_xlabel("Dimuon mass GeV")
+    ax2.set_ylim(bottom=0.8)
+    ax2.legend(loc='upper left',frameon=True, fontsize=8)
+    plt.savefig("transient/Z-stack_similtaneous.pdf")
+    print(chi_values)
+sim_fits(tmass,simdatam,datam,calibration_factor,False)
