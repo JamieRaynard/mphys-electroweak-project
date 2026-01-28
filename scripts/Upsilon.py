@@ -122,11 +122,11 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     # scaled_sim_massHist = scaled_sim_massHist * (np.sum(data_massHist)/np.sum(scaled_sim_massHist))
 
     #Idea:
-    data_massHist = data_massHist - background
-    unscaled_sim_massHist = unscaled_sim_massHist * (np.sum(data_massHist)/np.sum(unscaled_sim_massHist))
-    scaled_sim_massHist = scaled_sim_massHist * (np.sum(data_massHist)/np.sum(scaled_sim_massHist))
+    data_massHist_noBG = data_massHist - background
+    data_massHist_noBG[data_massHist_noBG < 0.0] = 0.0
+    unscaled_sim_massHist = unscaled_sim_massHist * (np.sum(data_massHist_noBG)/np.sum(unscaled_sim_massHist))
+    scaled_sim_massHist = scaled_sim_massHist * (np.sum(data_massHist_noBG)/np.sum(scaled_sim_massHist))
     
-    data_massHist = data_massHist + background
 
     plt.bar(bincenters, background, width=binwidth, label="Background", color="lightgray", align="center")
     plt.step(bincenters, unscaled_sim_massHist+background,where="mid",label="Sim without smearing",color="blue",zorder=2)
