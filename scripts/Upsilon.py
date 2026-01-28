@@ -66,7 +66,6 @@ def PlotHistogram(mass,filename,Output=None):
     bincenters = np.array(binlist)
     N_tot = np.sum(massHist)
     
-
     #Crystal Ball fit:
     p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,N_tot,0.5*N_tot,9.9e-5]
     bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0], [5.0, 10.0, 9.50, 0.10,  N_tot, 10*N_tot, 1.0])
@@ -77,7 +76,7 @@ def PlotHistogram(mass,filename,Output=None):
     plt.plot(bincenters,model,label="Crystall Ball function\nWith Background")
     #A more accurate fit could be a double tailed crystal ball
     
-    print(f'Saving plot to transient/Upsilon_mass{filename}.pdf')
+    #print(f'Saving plot to transient/Upsilon_mass_{filename}.pdf')
 
     plt.legend()
     plt.xlabel("Mass / GeV")
@@ -173,6 +172,18 @@ def Comparing():
     CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass)
     return 0
 
+def CalcScaling():
+    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
+    mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    sim_results = PlotHistogram(mass,"U1S",Output=True)
+    alpha_s = CalcAlpha(sim_results["mass"][0],sim_results["mass"][1])
+    mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
+    mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    data_results = PlotHistogram(mass,"DATA",Output=True)
+    alpha_d = CalcAlpha(data_results["mass"][0],data_results["mass"][1])
+    return CalcC(alpha_s,alpha_d)
+
+
 def Alpha(m,m_pdg):
     return (m/m_pdg) - 1
 
@@ -261,48 +272,39 @@ def main():
     else:
         print("Invalid source given")
         return 1
-    if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on":
+    if (args.FullOutput).lower() == "true":
         loc = "U1S"
 
     output = {}
     filename=loc
+    factor=1
 
-    mup_P,mum_P,mup_E,mum_E = GetBranches(loc)
-
+    #Smearing
     if (((args.Smearing).lower() == "on"  or (args.Smearing).lower() == "true") and loc == "U1S") or (args.FullOutput).lower() == "true":
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
-        rng = np.random.default_rng(seed=10)
-
-        #Mininimising Chi2 approach (requires chaning CalcSmearFactor)
-        #sd_dif = np.sqrt(0.0455171**2 - 0.0400880351**2)
-        #global Norm_rand
-        #Norm_rand = (rng.normal(0,sd_dif,size=len(mum_E)))
-        #sigma = CalcSmearFactorByMinimise()
-
-        #Calculating directly approach
         sigma,sigma_err = CalcSmearFactor()
-        print(f'WOOO got a scale variable: {sigma} ± {sigma_err}')
+        print(f'WOOO got a smearing variable: {sigma} ± {sigma_err}')
+        rng = np.random.default_rng(seed=10)
         Norm_rand = rng.normal(0,1,size=len(mum_E))
-        factor = 1+Norm_rand*sigma
-        mup_P,mum_P,mup_E,mum_E = GetBranches(loc,calibration_factor=factor)
-        #This is just convinient for the file name
+        factor += (Norm_rand*sigma)
         output["Smear_factor"] = (sigma,sigma_err)
         filename = filename+"_Smeared"
-    
-    mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
 
-    if (args.FullOutput).lower() == "true" or (args.Calibration).lower() == "on" or (args.Calibration).lower() == "true":
-        #This is a tuple of format (value,uncertainty)
-        sim_results = PlotHistogram(mass,"U1S",Output=True)
-        alpha_s = CalcAlpha(sim_results["mass"][0],sim_results["mass"][1])
-        mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
+    #scaling
+    if  ((args.Calibration).lower()) == "on" or ((args.Calibration).lower() == "true") or ((args.FullOutput).lower() == "true"):
+        c,c_err = CalcScaling()
+        print(f'WOOO got a scaling variable: {c} ± {c_err}')
+        factor += c
+        output["C_ratio"] = (c,c_err)
+        filename= filename+"_Scaled"
+    
+    mup_P,mum_P,mup_E,mum_E = GetBranches(loc,calibration_factor=factor)
+    mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    PlotHistogram(mass,filename)
+    if (args.FullOutput).lower() == "true":
+        mup_P,mum_P,mup_E,mum_E = GetBranches("DATA",calibration_factor=factor)
         mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-        data_results = PlotHistogram(mass,"DATA",Output=True)
-        alpha_d = CalcAlpha(data_results["mass"][0],data_results["mass"][1])
-        c = CalcC(alpha_s,alpha_d)
-        output["C_ratio"] =  c
-    else:
-        PlotHistogram(mass,filename)
+        PlotHistogram(mass,"DATA_Smeared_Scaled")
 
     with open("Calibration_output.json","w") as OutputFile:
             dump(output,OutputFile,indent=2)
