@@ -5,6 +5,5 @@
 ./run ./scripts/Z_Simaltaneous_fits.py --Calibration=TRUE --Smear_error=MINUS 
 ./run ./scripts/Z_Simaltaneous_fits.py --Calibration=TRUE --C_ratio=PLUS 
 ./run ./scripts/Z_Simaltaneous_fits.py --Calibration=TRUE --C_ratio=MINUS 
-./run ./scripts/Z_mass_width_calibration_error.py
-
+./run ./scripts/Z_mass_width_calibration_er
 ./run pdflatex Images.tex
