@@ -37,3 +37,19 @@ with open("results_table.tex", "w") as f:
     f.write(f"Smearing error & {smear_mass_error:f} & {smear_width_error:f} \\\\\n")
     f.write(r"\hline" + "\n")
     f.write(r"\end{tabular}" + "\n")
+
+fname5 = "../mphys-electroweak-project/mass-width_values_and_error.txt"
+mass_width = np.loadtxt(fname5, dtype=float)
+mass=mass_width[0]
+width=mass_width[1]
+mass_error=mass_width[2]
+width_error=mass_width[3]
+with open("mass_width_results_table.tex", "w") as f:
+    f.write(r"\begin{tabular}{l c c}" + "\n")
+    f.write(r"\hline" + "\n")
+    f.write(r" & Mass & Width \\" + "\n")
+    f.write(r"\hline" + "\n")
+    f.write(f"values & {mass:f} & {width:f} \\\\\n")
+    f.write(f"statistical error & {mass_error:f} & {width_error:f} \\\\\n")
+    f.write(r"\hline" + "\n")
+    f.write(r"\end{tabular}" + "\n")
