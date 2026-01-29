@@ -285,6 +285,7 @@ def main():
         sigma,sigma_err = CalcSmearFactor()
         print(f'WOOO got a smearing variable: {sigma} ± {sigma_err}')
         rng = np.random.default_rng(seed=10)
+        mup_P,mum_P,mup_E,mum_E = GetBranches(loc,calibration_factor=factor) #temp solution: needs improving
         Norm_rand = rng.normal(0,1,size=len(mum_E))
         factor += (Norm_rand*sigma)
         output["Smear_factor"] = (sigma,sigma_err)
@@ -298,13 +299,14 @@ def main():
         output["C_ratio"] = (c,c_err)
         filename= filename+"_Scaled"
     
-    mup_P,mum_P,mup_E,mum_E = GetBranches(loc,calibration_factor=factor)
-    mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    PlotHistogram(mass,filename)
-    if (args.FullOutput).lower() == "true":
-        mup_P,mum_P,mup_E,mum_E = GetBranches("DATA",calibration_factor=factor)
-        mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-        PlotHistogram(mass,"DATA_Smeared_Scaled")
+    #I don't think this is needed
+    # mup_P,mum_P,mup_E,mum_E = GetBranches(loc,calibration_factor=factor)
+    # mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    # PlotHistogram(mass,filename)
+    # if (args.FullOutput).lower() == "true":
+    #     mup_P,mum_P,mup_E,mum_E = GetBranches("DATA",calibration_factor=factor)
+    #     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    #     PlotHistogram(mass,"DATA_Smeared_Scaled")
 
     with open("Calibration_output.json","w") as OutputFile:
             dump(output,OutputFile,indent=2)
