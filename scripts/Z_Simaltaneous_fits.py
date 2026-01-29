@@ -45,7 +45,7 @@ if (args.Calibration).lower() == "true":
         Smear_factor,Smear_factor_error = json_data["Smear_factor"]
         print(f'Woo we imported C_ratio to be {C_rat} ± {C_err}')
         print(f'Woo we imported smear factor to be {Smear_factor} ± {Smear_factor_error}')
-
+        fname = f"useless.txt"
         if (args.Smear_error).lower() == "plus":
             Smear_factor=Smear_factor+Smear_factor_error
             fname = f"smear_plus.txt"
@@ -72,6 +72,7 @@ if (args.Calibration).lower() == "true":
         calibration_factor=1
 else:
     calibration_factor = 1
+    fname = f"useless.txt"
 
 
 
