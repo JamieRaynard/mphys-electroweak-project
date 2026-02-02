@@ -45,7 +45,7 @@ if (args.Calibration).lower() == "true":
         Smear_factor,Smear_factor_error = json_data["Smear_factor"]
         print(f'Woo we imported C_ratio to be {C_rat} ± {C_err}')
         print(f'Woo we imported smear factor to be {Smear_factor} ± {Smear_factor_error}')
-        fname = f"useless.txt"
+        fname = f"mass-width_values_and_error.txt"
         if (args.Smear_error).lower() == "plus":
             Smear_factor=Smear_factor+Smear_factor_error
             fname = f"smear_plus.txt"
@@ -226,6 +226,9 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     with open(fname, "w") as f:
         f.write(f"{mass_result}\n")
         f.write(f"{width_result}")
+        if fname==f"mass-width_values_and_error.txt":
+            f.write(f"\n{mass_error}\n")
+            f.write(f"{width_error}")
     f.close()
     # plotting the stack graph with similtanous fits
     #the top half.
