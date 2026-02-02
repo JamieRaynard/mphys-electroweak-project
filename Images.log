@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020) (preloaded format=pdflatex 2026.1.27)  29 JAN 2026 16:20
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020) (preloaded format=pdflatex 2026.1.27)  2 FEB 2026 12:06
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -110,7 +110,14 @@ File: l3backend-pdftex.def 2021-03-18 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count199
 \l__pdf_internal_box=\box49
 )
-(./Images.aux)
+(./Images.aux
+
+LaTeX Warning: Label `fig:label' multiply defined.
+
+
+LaTeX Warning: Label `fig:label' multiply defined.
+
+)
 \openout1 = `Images.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 9.
@@ -127,8 +134,7 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 9.
 LaTeX Font Info:    ... okay on input line 9.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 9.
 LaTeX Font Info:    ... okay on input line 9.
-
-(/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+ (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count266
 \scratchdimen=\dimen150
@@ -209,31 +215,36 @@ File: transient/Z-stack_similtaneous.pdf Graphic file (type pdf)
 Package pdftex.def Info: transient/Z-stack_similtaneous.pdf  used on input line
  33.
 (pdftex.def)             Requested size: 258.75pt x 258.7647pt.
+<transient/Z-Error-Ellipse.pdf, id=6, 462.52798pt x 346.89601pt>
+File: transient/Z-Error-Ellipse.pdf Graphic file (type pdf)
+<use transient/Z-Error-Ellipse.pdf>
+Package pdftex.def Info: transient/Z-Error-Ellipse.pdf  used on input line 40.
+(pdftex.def)             Requested size: 258.75pt x 194.06989pt.
  [1
 
 {/usr/share/texlive/texmf-dist/fonts/map/pdftex/updmap/pdftex.map} <./transient
 /Upsilon_mass_DATA.png> <./transient/Upsilon_mass_U1S.png>] [2 <./transient/Ups
-ilon_mass_comparisson.png> <./transient/Z-stack_similtaneous.pdf>] (./Images.au
-x)
+ilon_mass_comparisson.png> <./transient/Z-stack_similtaneous.pdf>] [3 <./transi
+ent/Z-Error-Ellipse.pdf>] (./Images.aux)
 
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 2342 strings out of 481008
- 34461 string characters out of 5909439
- 323684 words of memory out of 5000000
- 19506 multiletter control sequences out of 15000+600000
+ 2348 strings out of 481008
+ 34668 string characters out of 5909439
+ 323722 words of memory out of 5000000
+ 19511 multiletter control sequences out of 15000+600000
  407593 words of font info for 42 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  72i,6n,78p,203b,234s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr
 /share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/
 texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb>
-Output written on Images.pdf (2 pages, 133996 bytes).
+Output written on Images.pdf (3 pages, 146342 bytes).
 PDF statistics:
- 76 PDF objects out of 1000 (max. 8388607)
- 21 compressed objects within 1 object stream
+ 113 PDF objects out of 1000 (max. 8388607)
+ 28 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 21 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 26 words of extra memory for PDF output out of 10000 (max. 10000000)
 

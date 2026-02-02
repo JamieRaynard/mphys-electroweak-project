@@ -12,6 +12,7 @@ from scipy.interpolate import CubicSpline
 from matplotlib.colors import ListedColormap
 from iminuit import Minuit
 import sqlite3
+from matplotlib.patches import Ellipse
 from datetime import datetime
 #where is the main function? :(
 
@@ -275,4 +276,27 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     ax2.legend(loc='upper left',frameon=True, fontsize=8)
     plt.savefig("transient/Z-stack_similtaneous.pdf")
     print(chi_values)
+
+    plt.figure()
+    eigenvalues , eigenvectors  = np.linalg.eigh(covariance_matrix)
+    order = eigenvalues.argsort()[::-1] 
+    eigenvalues = eigenvalues[order]
+    eigenvectors=eigenvectors[:, order]  #making the bigegst eignecalue and coresponding vector be first in order
+    major_axis_vector = eigenvectors[:,0]
+    vx, vy = major_axis_vector[0], major_axis_vector[1]
+    theta = np.degrees(np.arctan2(vy, vx))
+    major_axis_length = 2 * np.sqrt(eigenvalues[0]) 
+    minor_axis_length = 2 * np.sqrt(eigenvalues[1])
+    fig, ax = plt.subplots()
+    ellipse = Ellipse( (mass_result, width_result), width=major_axis_length, height=minor_axis_length, angle=theta, edgecolor='red', facecolor='none', linewidth=2)
+    ax.add_patch(ellipse)
+    ax.scatter(mass_result, width_result, color='blue', label='Measurement')
+    ax.set_xlabel("Mass") 
+    ax.set_ylabel("Width") 
+    ax.set_title("Mass Width error Ellipse") 
+    ax.legend(loc="upper left") 
+    ax.set_xlim(91.13, 91.155) 
+    ax.set_ylim(1.965,2.035) 
+    plt.savefig("transient/Z-Error-Ellipse.pdf")
+
 sim_fits(tmass,simdatam,datam,calibration_factor,False)
