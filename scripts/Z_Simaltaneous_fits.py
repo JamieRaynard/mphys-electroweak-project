@@ -223,14 +223,20 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     print(f"the width is {width_result} ± {width_error}")
     print(covariance_matrix)
     print(f"corelation is {corelation_coefficient}")
+    no_bins=len(binnweights905_1)
+    chi2_ndf=(np.min(chi_values))/(no_bins-2)
+    print(f"chi2_ndf is {chi2_ndf}")
 
     with open(fname, "w") as f:
         f.write(f"{mass_result}\n")
         f.write(f"{width_result}")
         if fname==f"mass-width_values_and_error.txt":
             f.write(f"\n{mass_error}\n")
-            f.write(f"{width_error}")
+            f.write(f"{width_error}\n")
+            f.write(f"{chi2_ndf}")
+
     f.close()
+
     # plotting the stack graph with similtanous fits
     #the top half.
 

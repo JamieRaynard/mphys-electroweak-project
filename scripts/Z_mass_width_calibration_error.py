@@ -44,6 +44,7 @@ mass=mass_width[0]
 width=mass_width[1]
 mass_error=mass_width[2]
 width_error=mass_width[3]
+chi2_ndf=mass_width[4]
 with open("mass_width_results_table.tex", "w") as f:
     f.write(r"\begin{tabular}{l c c}" + "\n")
     f.write(r"\hline" + "\n")
@@ -52,4 +53,15 @@ with open("mass_width_results_table.tex", "w") as f:
     f.write(f"values & {mass:f} & {width:f} \\\\\n")
     f.write(f"statistical error & {mass_error:f} & {width_error:f} \\\\\n")
     f.write(r"\hline" + "\n")
+    f.write(r"\end{tabular}" + "\n")
+
+
+
+with open("CHI2_ndf.tex", "w") as f: 
+    f.write(r"\begin{tabular}{c}" + "\n")  
+    f.write(r"\hline" + "\n") 
+    f.write(r"CHI$^2$/ndf \\" + "\n") 
+    f.write(r"\hline" + "\n") 
+    f.write(f"{chi2_ndf:f} \\\\" + "\n")  
+    f.write(r"\hline" + "\n") 
     f.write(r"\end{tabular}" + "\n")

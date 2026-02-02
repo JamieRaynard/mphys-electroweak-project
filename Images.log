@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020) (preloaded format=pdflatex 2026.1.27)  2 FEB 2026 12:06
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020) (preloaded format=pdflatex 2026.1.27)  2 FEB 2026 14:15
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -110,14 +110,7 @@ File: l3backend-pdftex.def 2021-03-18 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count199
 \l__pdf_internal_box=\box49
 )
-(./Images.aux
-
-LaTeX Warning: Label `fig:label' multiply defined.
-
-
-LaTeX Warning: Label `fig:label' multiply defined.
-
-)
+(./Images.aux)
 \openout1 = `Images.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 9.
@@ -134,7 +127,8 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 9.
 LaTeX Font Info:    ... okay on input line 9.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 9.
 LaTeX Font Info:    ... okay on input line 9.
- (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+
+(/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count266
 \scratchdimen=\dimen150
@@ -190,7 +184,7 @@ G,.JBIG2,.JB2,.eps]
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-(./results_table.tex) (./mass_width_results_table.tex)
+(./results_table.tex) (./CHI2_ndf.tex) (./mass_width_results_table.tex)
 <transient/Upsilon_mass_DATA.png, id=1, 462.528pt x 346.896pt>
 File: transient/Upsilon_mass_DATA.png Graphic file (type png)
 <use transient/Upsilon_mass_DATA.png>
@@ -203,6 +197,11 @@ File: transient/Upsilon_mass_U1S.png Graphic file (type png)
 Package pdftex.def Info: transient/Upsilon_mass_U1S.png  used on input line 19.
 
 (pdftex.def)             Requested size: 169.0519pt x 126.78801pt.
+
+Overfull \hbox (105.18147pt too wide) in paragraph at lines 1--23
+[][]  []  []
+ []
+
 <transient/Upsilon_mass_comparisson.png, id=4, 462.528pt x 346.896pt>
 File: transient/Upsilon_mass_comparisson.png Graphic file (type png)
 <use transient/Upsilon_mass_comparisson.png>
@@ -220,31 +219,32 @@ File: transient/Z-Error-Ellipse.pdf Graphic file (type pdf)
 <use transient/Z-Error-Ellipse.pdf>
 Package pdftex.def Info: transient/Z-Error-Ellipse.pdf  used on input line 40.
 (pdftex.def)             Requested size: 258.75pt x 194.06989pt.
- [1
+[1
 
 {/usr/share/texlive/texmf-dist/fonts/map/pdftex/updmap/pdftex.map} <./transient
 /Upsilon_mass_DATA.png> <./transient/Upsilon_mass_U1S.png>] [2 <./transient/Ups
 ilon_mass_comparisson.png> <./transient/Z-stack_similtaneous.pdf>] [3 <./transi
 ent/Z-Error-Ellipse.pdf>] (./Images.aux)
 
-LaTeX Warning: There were multiply-defined labels.
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
  ) 
 Here is how much of TeX's memory you used:
- 2348 strings out of 481008
- 34668 string characters out of 5909439
- 323722 words of memory out of 5000000
- 19511 multiletter control sequences out of 15000+600000
+ 2352 strings out of 481008
+ 34714 string characters out of 5909439
+ 323684 words of memory out of 5000000
+ 19512 multiletter control sequences out of 15000+600000
  407593 words of font info for 42 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 72i,6n,78p,203b,234s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 72i,7n,78p,203b,234s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr
 /share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/
-texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb>
-Output written on Images.pdf (3 pages, 146342 bytes).
+texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texlive
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb>
+Output written on Images.pdf (3 pages, 154301 bytes).
 PDF statistics:
- 113 PDF objects out of 1000 (max. 8388607)
- 28 compressed objects within 1 object stream
+ 117 PDF objects out of 1000 (max. 8388607)
+ 31 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  26 words of extra memory for PDF output out of 10000 (max. 10000000)
 
