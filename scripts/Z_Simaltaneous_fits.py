@@ -223,17 +223,17 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     print(f"the width is {width_result} ± {width_error}")
     print(covariance_matrix)
     print(f"corelation is {corelation_coefficient}")
-    no_bins=len(binnweights905_1)
-    chi2_ndf=(np.min(chi_values))/(no_bins-2)
-    print(f"chi2_ndf is {chi2_ndf}")
-
+    ndf=len(binnweights905_1)-2
+    chimin=np.min(chi_values)
     with open(fname, "w") as f:
         f.write(f"{mass_result}\n")
         f.write(f"{width_result}")
         if fname==f"mass-width_values_and_error.txt":
             f.write(f"\n{mass_error}\n")
             f.write(f"{width_error}\n")
-            f.write(f"{chi2_ndf}")
+            f.write(f"{chimin}\n")
+            f.write(f"{ndf}\n")
+            f.write(f"{corelation_coefficient}")
 
     f.close()
 
@@ -263,7 +263,7 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     ax1.step(centers, simHist_scaled91_2, '-', linewidth=2,where='mid', label='91 Gev mass 2 Gev width template')
     ax1.set_ylabel("Frequency")
     ax1.legend(loc='upper left',frameon=True, fontsize=8)
-
+    ax1.set_ylim(bottom=0)
     # bottom
     ratio_91_3_91_2=simHist_scaled91_3/simHist_scaled91_2
     ratio_91_2_91_2=simHist_scaled91_2/simHist_scaled91_2
@@ -283,6 +283,7 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     plt.savefig("transient/Z-stack_similtaneous.pdf")
     print(chi_values)
 
+    # graph elipse of mass width
     plt.figure()
     eigenvalues , eigenvectors  = np.linalg.eigh(covariance_matrix)
     order = eigenvalues.argsort()[::-1] 
