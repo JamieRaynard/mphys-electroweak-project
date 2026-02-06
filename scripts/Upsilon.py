@@ -81,7 +81,7 @@ def PlotHistogram(mass,filename,Output=None):
     plt.legend()
     plt.xlabel("Mass / GeV")
     plt.ylabel("Counts")
-    plt.title(f"Reconstructed Upsilon {filename}")
+    #plt.title(f"Reconstructed Upsilon {filename}")
     plt.savefig(f"transient/Upsilon_mass_{filename}.png")
     plt.clf()
 
@@ -141,7 +141,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     plt.xlabel("Mass / GeV")
     plt.ylabel("Counts")
     plt.ylim(bottom=0)
-    plt.title(r"Comparing the effect of momentum smearing")
+    #plt.title(r"Comparing the effect of momentum smearing")
     plt.savefig(f"transient/Upsilon_mass_comparisson.png")
     plt.clf()
 
