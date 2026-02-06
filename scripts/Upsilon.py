@@ -102,7 +102,7 @@ def PlotHistogram(mass,filename,Output=None):
         return 0
 
 def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
-    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.25,9.75))
+    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.2,9.75))
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -115,8 +115,8 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     fitParam = PlotHistogram(data_mass,'DATA_fit',Output=True)
     background = fitParam["A"][0]*np.exp(-1*float(fitParam["B"][0])*bincenters)*binwidth
 
-    unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.25,9.75)))
-    scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.25,9.75)))
+    unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.2,9.75)))
+    scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.2,9.75)))
 
     #Original
     # unscaled_sim_massHist = unscaled_sim_massHist + background*(np.sum(unscaled_sim_massHist)/np.sum(data_massHist))
