@@ -37,6 +37,7 @@ with open("results_table.tex", "w") as f:
     f.write(r"\hline" + "\n")
     f.write(f"Calibration error & {Calibration_ratio_mass_error:.5f} & {Calibration_ratio_width_error:.5f} \\\\\n")
     f.write(f"Smearing error & {smear_mass_error:.5f} & {smear_width_error:.5f} \\\\\n")
+    f.write(r'$\Upsilon$(1S) mass error & 0.0001 & 0.0000 \\' + '\n')
     f.write(r"\hline" + "\n")
     f.write(r"\end{tabular}" + "\n")
     f.write(r"\caption{Z Systematic error on mass and width}" + "\n")

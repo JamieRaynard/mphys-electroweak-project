@@ -194,12 +194,9 @@ def Alpha(m,m_pdg):
 
 def CalcAlpha(m,m_err):
     M_PDG = 9.46040
-    M_PDG_ERR = 0.00013
     alph = Alpha(m,M_PDG)
     err_m = Alpha(m+m_err,M_PDG) - alph
-    err_mpdg = Alpha(m,M_PDG+M_PDG_ERR) - alph
-    err_tot = np.sqrt(err_m**2+err_mpdg**2)
-    return (alph,err_tot)
+    return (alph,err_m)
 
 def c_ratio(alph_s,alph_d):
     return (1+alph_d)/(1+alph_s)
