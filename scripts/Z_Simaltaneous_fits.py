@@ -12,6 +12,7 @@ from scipy.interpolate import CubicSpline
 from matplotlib.colors import ListedColormap
 from iminuit import Minuit
 import sqlite3
+from matplotlib.patches import Ellipse
 from datetime import datetime
 #where is the main function? :(
 
@@ -222,14 +223,20 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     print(f"the width is {width_result} ± {width_error}")
     print(covariance_matrix)
     print(f"corelation is {corelation_coefficient}")
-
+    ndf=len(binnweights905_1)-2
+    chimin=np.min(chi_values)
     with open(fname, "w") as f:
         f.write(f"{mass_result}\n")
         f.write(f"{width_result}")
         if fname==f"mass-width_values_and_error.txt":
             f.write(f"\n{mass_error}\n")
-            f.write(f"{width_error}")
+            f.write(f"{width_error}\n")
+            f.write(f"{chimin}\n")
+            f.write(f"{ndf}\n")
+            f.write(f"{corelation_coefficient}")
+
     f.close()
+
     # plotting the stack graph with similtanous fits
     #the top half.
 
@@ -256,7 +263,7 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     ax1.step(centers, simHist_scaled91_2, '-', linewidth=2,where='mid', label='91 Gev mass 2 Gev width template')
     ax1.set_ylabel("Frequency")
     ax1.legend(loc='upper left',frameon=True, fontsize=8)
-
+    ax1.set_ylim(bottom=0)
     # bottom
     ratio_91_3_91_2=simHist_scaled91_3/simHist_scaled91_2
     ratio_91_2_91_2=simHist_scaled91_2/simHist_scaled91_2
@@ -275,4 +282,28 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     ax2.legend(loc='upper left',frameon=True, fontsize=8)
     plt.savefig("transient/Z-stack_similtaneous.pdf")
     print(chi_values)
+
+    # graph elipse of mass width
+    plt.figure()
+    eigenvalues , eigenvectors  = np.linalg.eigh(covariance_matrix)
+    order = eigenvalues.argsort()[::-1] 
+    eigenvalues = eigenvalues[order]
+    eigenvectors=eigenvectors[:, order]  #making the bigegst eignecalue and coresponding vector be first in order
+    major_axis_vector = eigenvectors[:,0]
+    vx, vy = major_axis_vector[0], major_axis_vector[1]
+    theta = np.degrees(np.arctan2(vy, vx))
+    major_axis_length = 2 * np.sqrt(eigenvalues[0]) 
+    minor_axis_length = 2 * np.sqrt(eigenvalues[1])
+    fig, ax = plt.subplots()
+    ellipse = Ellipse( (mass_result, width_result), width=major_axis_length, height=minor_axis_length, angle=theta, edgecolor='red', facecolor='none', linewidth=2)
+    ax.add_patch(ellipse)
+    ax.scatter(mass_result, width_result, color='blue', label='Measurement')
+    ax.set_xlabel("Mass") 
+    ax.set_ylabel("Width") 
+    ax.set_title("Mass Width error Ellipse") 
+    ax.legend(loc="upper left") 
+    ax.set_xlim(91.13, 91.155) 
+    ax.set_ylim(1.965,2.035) 
+    plt.savefig("transient/Z-Error-Ellipse.pdf")
+
 sim_fits(tmass,simdatam,datam,calibration_factor,False)

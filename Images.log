@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020) (preloaded format=pdflatex 2026.1.27)  29 JAN 2026 16:20
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020) (preloaded format=pdflatex 2026.1.27)  5 FEB 2026 15:06
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -105,80 +105,63 @@ LaTeX Font Info:    Redeclaring font encoding OMS on input line 744.
 LaTeX Info: Redefining \[ on input line 2923.
 LaTeX Info: Redefining \] on input line 2924.
 )
+(/usr/share/texlive/texmf-dist/tex/latex/float/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count199
+\float@exts=\toks21
+\float@box=\box49
+\@float@everytoks=\toks22
+\@floatcapt=\box50
+) (./constants.tex)
 (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2021-03-18 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count199
-\l__pdf_internal_box=\box49
+\l__color_backend_stack_int=\count266
+\l__pdf_internal_box=\box51
 )
-(./Images.aux)
+(./Images.aux
+
+LaTeX Warning: Label `fig:label' multiply defined.
+
+
+LaTeX Warning: Label `fig:label' multiply defined.
+
+
+LaTeX Warning: Label `fig:label' multiply defined.
+
+)
 \openout1 = `Images.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-
-(/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+ (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count266
+\scratchcounter=\count267
 \scratchdimen=\dimen150
-\scratchbox=\box50
-\nofMPsegments=\count267
-\nofMParguments=\count268
-\everyMPshowfont=\toks21
-\MPscratchCnt=\count269
+\scratchbox=\box52
+\nofMPsegments=\count268
+\nofMParguments=\count269
+\everyMPshowfont=\toks23
+\MPscratchCnt=\count270
 \MPscratchDim=\dimen151
-\MPnumerator=\count270
-\makeMPintoPDFobject=\count271
-\everyMPtoPDFconversion=\toks22
+\MPnumerator=\count271
+\makeMPintoPDFobject=\count272
+\everyMPtoPDFconversion=\toks24
 ) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
-
-(/usr/share/texlive/texmf-dist/tex/generic/infwarerr/infwarerr.sty
-Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
-)
-(/usr/share/texlive/texmf-dist/tex/latex/grfext/grfext.sty
-Package: grfext 2019/12/03 v1.3 Manage graphics extensions (HO)
-
-(/usr/share/texlive/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty
-Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
-))
-(/usr/share/texlive/texmf-dist/tex/latex/kvoptions/kvoptions.sty
-Package: kvoptions 2020-10-07 v3.14 Key value format for package options (HO)
-
-(/usr/share/texlive/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
-Package: ltxcmds 2020-05-10 v1.25 LaTeX kernel commands for general use (HO)
-)
-(/usr/share/texlive/texmf-dist/tex/generic/kvsetkeys/kvsetkeys.sty
-Package: kvsetkeys 2019/12/15 v1.18 Key value parser (HO)
-))
-(/usr/share/texlive/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
-Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
-)
-
-(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty
-Package: iftex 2020/03/06 v1.0d TeX engine tests
-)
-Package pdftexcmds Info: \pdf@primitive is available.
-Package pdftexcmds Info: \pdf@ifprimitive is available.
-Package pdftexcmds Info: \pdfdraftmode found.
-)
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 85.
-Package grfext Info: Graphics extension search list:
-(grfext)             [.pdf,.png,.jpg,.mps,.jpeg,.jbig2,.jb2,.PDF,.PNG,.JPG,.JPE
-G,.JBIG2,.JB2,.eps]
-(grfext)             \AppendGraphicsExtensions on input line 504.
 
 (/usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
@@ -188,52 +171,61 @@ e
 <transient/Upsilon_mass_DATA.png, id=1, 462.528pt x 346.896pt>
 File: transient/Upsilon_mass_DATA.png Graphic file (type png)
 <use transient/Upsilon_mass_DATA.png>
-Package pdftex.def Info: transient/Upsilon_mass_DATA.png  used on input line 18
+Package pdftex.def Info: transient/Upsilon_mass_DATA.png  used on input line 21
 .
 (pdftex.def)             Requested size: 169.0519pt x 126.78801pt.
 <transient/Upsilon_mass_U1S.png, id=3, 462.528pt x 346.896pt>
 File: transient/Upsilon_mass_U1S.png Graphic file (type png)
 <use transient/Upsilon_mass_U1S.png>
-Package pdftex.def Info: transient/Upsilon_mass_U1S.png  used on input line 19.
+Package pdftex.def Info: transient/Upsilon_mass_U1S.png  used on input line 22.
 
 (pdftex.def)             Requested size: 169.0519pt x 126.78801pt.
 <transient/Upsilon_mass_comparisson.png, id=4, 462.528pt x 346.896pt>
 File: transient/Upsilon_mass_comparisson.png Graphic file (type png)
 <use transient/Upsilon_mass_comparisson.png>
 Package pdftex.def Info: transient/Upsilon_mass_comparisson.png  used on input 
-line 26.
+line 29.
 (pdftex.def)             Requested size: 258.75pt x 194.06987pt.
-<transient/Z-stack_similtaneous.pdf, id=5, 433.62pt x 433.62pt>
-File: transient/Z-stack_similtaneous.pdf Graphic file (type pdf)
-<use transient/Z-stack_similtaneous.pdf>
-Package pdftex.def Info: transient/Z-stack_similtaneous.pdf  used on input line
- 33.
-(pdftex.def)             Requested size: 258.75pt x 258.7647pt.
  [1
 
 {/usr/share/texlive/texmf-dist/fonts/map/pdftex/updmap/pdftex.map} <./transient
-/Upsilon_mass_DATA.png> <./transient/Upsilon_mass_U1S.png>] [2 <./transient/Ups
-ilon_mass_comparisson.png> <./transient/Z-stack_similtaneous.pdf>] (./Images.au
-x)
+/Upsilon_mass_DATA.png> <./transient/Upsilon_mass_U1S.png>] (./CHI2_ndf.tex)
+<transient/Z-stack_similtaneous.pdf, id=16, 433.62pt x 433.62pt>
+File: transient/Z-stack_similtaneous.pdf Graphic file (type pdf)
+<use transient/Z-stack_similtaneous.pdf>
+Package pdftex.def Info: transient/Z-stack_similtaneous.pdf  used on input line
+ 38.
+(pdftex.def)             Requested size: 258.75pt x 258.7647pt.
+ [2 <./transient/Upsilon_mass_comparisson.png>]
+<transient/Z-Error-Ellipse.pdf, id=23, 462.52798pt x 346.89601pt>
+File: transient/Z-Error-Ellipse.pdf Graphic file (type pdf)
+<use transient/Z-Error-Ellipse.pdf>
+Package pdftex.def Info: transient/Z-Error-Ellipse.pdf  used on input line 47.
+(pdftex.def)             Requested size: 258.75pt x 194.06989pt.
+ [3 <./transient/Z-stack_similtaneous.pdf> <./transient/Z-Error-Ellipse.pdf>] (
+./Images.aux)
 
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 2342 strings out of 481008
- 34461 string characters out of 5909439
- 323684 words of memory out of 5000000
- 19506 multiletter control sequences out of 15000+600000
+ 1934 strings out of 481008
+ 27254 string characters out of 5909439
+ 316008 words of memory out of 5000000
+ 19119 multiletter control sequences out of 15000+600000
  407593 words of font info for 42 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 72i,6n,78p,203b,234s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr
-/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/
-texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb>
-Output written on Images.pdf (2 pages, 133996 bytes).
+ 68i,8n,74p,220b,223s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></us
+r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fo
+nts/type1/public/amsfonts/cm/cmsy10.pfb>
+Output written on Images.pdf (3 pages, 170679 bytes).
 PDF statistics:
- 76 PDF objects out of 1000 (max. 8388607)
- 21 compressed objects within 1 object stream
+ 125 PDF objects out of 1000 (max. 8388607)
+ 37 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 21 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 26 words of extra memory for PDF output out of 10000 (max. 10000000)
 
