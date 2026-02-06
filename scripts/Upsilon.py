@@ -58,13 +58,16 @@ def Reconstruct(mup_P,mum_P,mup_E,mum_E):
 
 #loc and smear are just variables to determine the file name the graph will be saved under
 def PlotHistogram(mass,filename,Output=None):
-    massHist,bins,_ = plt.hist(mass,bins=100,range=(9.200,9.750),histtype='step',label="Upsilon mass")
+    #xmassHist, xbins, x = plt.hist(mass,bins=100,range=(9.2,9.75),histtype='step')
+    massHist,bins = np.histogram(mass,bins=100,range=(9.200,9.750))
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
         binlist.append(binlist[-1]+binwidth)
     bincenters = np.array(binlist)
     N_tot = np.sum(massHist)
+    plt.scatter(bincenters,massHist,s=5 ,c='black')
+    plt.errorbar(bincenters,massHist,yerr=np.sqrt(massHist),fmt='none',ecolor='black',elinewidth=1,capsize=2)
     
     #Crystal Ball fit:
     p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,N_tot,0.5*N_tot,9.9e-5]
@@ -81,7 +84,8 @@ def PlotHistogram(mass,filename,Output=None):
     plt.legend()
     plt.xlabel("Mass / GeV")
     plt.ylabel("Counts")
-    plt.title(f"Reconstructed Upsilon {filename}")
+    plt.ylim(bottom=0)
+    #plt.title(f"Reconstructed Upsilon {filename}")
     plt.savefig(f"transient/Upsilon_mass_{filename}.png")
     plt.clf()
 
@@ -130,7 +134,8 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     plt.bar(bincenters, background, width=binwidth, label="Background", color="lightgray", align="center")
     plt.step(bincenters, unscaled_sim_massHist+background,where="mid",label="Sim without smearing",color="blue",zorder=2)
     plt.step(bincenters, scaled_sim_massHist+background, where="mid", label="Sim with smearing",color="orange",zorder=2)
-    plt.scatter(bincenters, data_massHist, label = "Data", s=5 ,c='black',zorder=3)
+    plt.scatter(bincenters, data_massHist, label = "Data", s=2 ,c='black',zorder=3)
+    plt.errorbar(bincenters, data_massHist, yerr=np.sqrt(data_massHist),fmt='none')
 
     # unscaled_sim_massHist = unscaled_sim_massHist + background
     # scaled_sim_massHist = scaled_sim_massHist + background
@@ -141,7 +146,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     plt.xlabel("Mass / GeV")
     plt.ylabel("Counts")
     plt.ylim(bottom=0)
-    plt.title(r"Comparing the effect of momentum smearing")
+    #plt.title(r"Comparing the effect of momentum smearing")
     plt.savefig(f"transient/Upsilon_mass_comparisson.png")
     plt.clf()
 
