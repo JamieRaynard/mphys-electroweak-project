@@ -29,11 +29,17 @@ def GetBranches(loc):
     data = ConvertCoords(Rawdata) #root file is in eta,phi but we want px,py,pz
     return data 
 
-def UsefulValues(data,calibration_factor=1):
+def UsefulValues(data,calibration_factor=1,smear=None):
     MUON_MASS = 0.1057
     mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
-    mup_P = mup_P*calibration_factor
-    mum_P = mum_P*calibration_factor
+    if smear:
+        rng = np.random.default_rng(seed=10)
+        Norm_rand = rng.normal(0,1,size=len(data["mup_PX"]))
+        mup_P = 1/(calibration_factor*(1/mup_P)+Norm_rand*smear)
+        mum_P = -1/(calibration_factor*(-1/mum_P)+Norm_rand*smear)
+    else:
+        mup_P = mup_P*calibration_factor
+        mum_P = mum_P*calibration_factor
     mup_P_mag = np.sqrt(mup_P[0]**2+mup_P[1]**2+mup_P[2]**2)
     mum_P_mag = np.sqrt(mum_P[0]**2+mum_P[1]**2+mum_P[2]**2)
     mup_E,mum_E = np.sqrt(mup_P_mag**2+MUON_MASS**2),np.sqrt(mum_P_mag**2+MUON_MASS**2)
@@ -82,11 +88,6 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
         fitfunc = CrystalBallFitNoBg
         #p0[5] = 0.0
         #p0[6] = 0.0
-        #p0 = [1.6,1.8747,9.458,0.03,N_tot,0.0,0.0] #_test_
-        #p0 = [1.599,1.874,9.458,0.03,N_tot,0.0,0.0]
-        #p0 = [1.59796227e+00,1.87371659e+00,9.45809044e+00,3.96822945e-02,4.97073996e+05,0.00000000e+00,0.00000000e+00]
-        #p0 = [1.598,1.8737,9.458,0.03,N_tot,0.0,0.0]
-        #p0 = [1.596,1.873,9.458,0.03,N_tot,0.0,0.0]
         #p0 = [1.595,1.8727,9.458,0.03,0.99*N_tot,0.0,0.0]
         p0 = [1.7,1.8727,9.458,0.03,0.99*N_tot,0.0,0.0]
         p0 = [1.35259258,3.40023716,9.45816238,4.00892327e-02,4.91203393e+05,0.0,0.0]
@@ -98,10 +99,14 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     fitParam, cov = curve_fit(lambda x, beta, m, loc, scale, Ns, A, B: fitfunc(x, beta, m, loc, scale, Ns, A, B, binwidth), bincenters, massHist, p0=p0, bounds=bounds, maxfev=100000)
     err = np.sqrt(np.diag(cov))
     #print(fitParam,"\n",err)
-    model = CrystalBallFitNoBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],binwidth)
-    plt.plot(bincenters,model,label="Crystall Ball function")
+    # model = CrystalBallFitNoBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],binwidth)
+    # plt.plot(bincenters,model,label="Crystall Ball function")
+    beta,m,loc,scale,N,A,B = fitParam
+    plt.plot(bincenters, (N*crystalball.pdf(bincenters,beta,m,loc=loc,scale=scale))*binwidth,label="Crystall Ball function",color="red")
     if not sim:
-        plt.plot(bincenters,fitParam[5]*np.exp(-fitParam[6]*bincenters),label="background")
+        plt.plot(bincenters,fitParam[5]*np.exp(-fitParam[6]*bincenters)*binwidth,label="background",color="blue")
+        combined_model = CrystalBallFitBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5],fitParam[6],binwidth)
+        plt.plot(bincenters,combined_model,label="combined",color="purple")
     #A more accurate fit could be a double tailed crystal ball
     
     #print(f'Saving plot to transient/Upsilon_mass_{filename}.pdf')
@@ -111,7 +116,7 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     plt.ylabel("Counts")
     plt.ylim(bottom=0)
     #plt.title(f"Reconstructed Upsilon {filename}")
-    plt.savefig(f"transient/Upsilon_mass_test_{filename}.png")
+    plt.savefig(f"transient/Upsilon_mass_{filename}.png")
     plt.clf()
 
     if Output == "test":
@@ -183,12 +188,14 @@ def Comparing(sim_branches,data_branches):
     
     mup_P,mum_P,mup_E,mum_E = UsefulValues(data_branches)
     data_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+
     mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches)
     unscaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+
     rng = np.random.default_rng(seed=10)
     Norm_rand = rng.normal(0,1,size=len(mum_E))
-    calibration_factor = 1+alpha+Norm_rand*Smear_factor
-    mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches,calibration_factor=calibration_factor)
+    calibration_factor = 1+alpha
+    mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches,calibration_factor=calibration_factor,smear=Smear_factor)
     scaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass)
     return 0
@@ -236,7 +243,7 @@ def width_chi2(sigma,width_data,width_data_err,mup_P_orig,mum_P_orig,mup_E,mum_E
     return (width_sim[0] - width_data)**2 / width_data_err**2
 
 def CalcSmearFactorByMinimise():
-    #Currently unused
+    #Currently unused and outdated
     mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     data_width = PlotHistogram(mass,"DATA",Output=True)["width"]
@@ -256,6 +263,8 @@ def CalcSmearFactor(sim_branches,data_branches,model='Naive'):
     data_results = PlotHistogram(data_mass,"DATA",Output=True)
     if model !='Naive':
         p_scale = np.mean([mup_P_sim,mum_P_sim])#,mup_P_dat,mum_P_dat])
+    else:
+        p_scale = 1
     
     print(f'Data width: {data_results["width"][0]} ± {data_results["width"][1]} \nUnsmeared sim width: {sim_results["width"][0]} ± {sim_results["width"][1]}')
     sigma = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0],p_scale)
@@ -279,6 +288,7 @@ def main():
     parser.add_argument('--Compare',default="FALSE",type=str)
     args = parser.parse_args()
 
+    print("Arguments read correctly, fetching decay trees...")
     sim_branches = GetBranches("U1S")
     data_branches = GetBranches("DATA")
 
@@ -301,20 +311,23 @@ def main():
     filename=loc
     factor=1
 
+    print("Decay trees fetched")
+
     #Smearing
     if (((args.Smearing).lower() == "on"  or (args.Smearing).lower() == "true") and loc == "U1S") or (args.FullOutput).lower() == "true":
+        print("Calculating smear factor...")
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
-        sigma,sigma_err = CalcSmearFactor(sim_branches,data_branches)
+        sigma,sigma_err = CalcSmearFactor(sim_branches,data_branches,model='complex')
         print(f'WOOO got a smearing variable: {sigma} ± {sigma_err}')
         rng = np.random.default_rng(seed=10)
-        mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches)
-        Norm_rand = rng.normal(0,1,size=len(mum_E))
+        Norm_rand = rng.normal(0,1,size=len(sim_branches["mup_PX"]))
         factor += (Norm_rand*sigma)
         output["Smear_factor"] = (sigma,sigma_err)
         filename = filename+"_Smeared"
 
     #scaling
     if  ((args.Calibration).lower()) == "on" or ((args.Calibration).lower() == "true") or ((args.FullOutput).lower() == "true"):
+        print("Calculating scale factor...")
         c,c_err = CalcScaling(sim_branches,data_branches)
         print(f'WOOO got a scaling variable: {c} ± {c_err}')
         factor += c
