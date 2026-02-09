@@ -22,12 +22,15 @@ def CrystalBallFitBg(x,beta,m,loc,scale,N,A,B,binwidth):
 def CrystalBallFitNoBg(x,beta,m,loc,scale,N,A=0,B=0,binwidth=0):
     return CrystalBallFitBg(x,beta,m,loc,scale,N,A=0,B=0,binwidth=binwidth)
 
-def GetBranches(loc,calibration_factor=1):
-    MUON_MASS = 0.1057
+def GetBranches(loc):
     DATADIR="/storage/epp2/phshgg/Public/MPhysProject_2025_2026/tuples/0/"
     with uproot.open(f"{DATADIR}/DecayTree__U1S__{loc}__d13600GeV_24c4.root:DecayTree") as t:
         Rawdata = t.arrays(["mup_pt","mup_eta","mup_phi","mum_pt","mum_eta","mum_phi"],library="np")
     data = ConvertCoords(Rawdata) #root file is in eta,phi but we want px,py,pz
+    return data 
+
+def UsefulValues(data,calibration_factor=1):
+    MUON_MASS = 0.1057
     mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
     mup_P = mup_P*calibration_factor
     mum_P = mum_P*calibration_factor
@@ -165,7 +168,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
 
     return 0
 
-def Comparing():
+def Comparing(sim_branches,data_branches):
     try:
         with open("Calibration_output.json",) as InputFile:
             Calibration = load(InputFile)
@@ -178,24 +181,24 @@ def Comparing():
         print('Please run the script with --FullOutput="TRUE" first to get all required calibration information')
         return 1
     
-    mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
+    mup_P,mum_P,mup_E,mum_E = UsefulValues(data_branches)
     data_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S",calibration_factor=1)
+    mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches)
     unscaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     rng = np.random.default_rng(seed=10)
     Norm_rand = rng.normal(0,1,size=len(mum_E))
     calibration_factor = 1+alpha+Norm_rand*Smear_factor
-    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S",calibration_factor=calibration_factor)
+    mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches,calibration_factor=calibration_factor)
     scaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass)
     return 0
 
-def CalcScaling():
-    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
+def CalcScaling(sim_branches,data_branches):
+    mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches)
     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     sim_results = PlotHistogram(mass,"U1S",Output=True,sim=True)
     alpha_s = CalcAlpha(sim_results["mass"][0],sim_results["mass"][1])
-    mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
+    mup_P,mum_P,mup_E,mum_E = UsefulValues(data_branches)
     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     data_results = PlotHistogram(mass,"DATA",Output=True)
     alpha_d = CalcAlpha(data_results["mass"][0],data_results["mass"][1])
@@ -244,11 +247,11 @@ def CalcSmearFactorByMinimise():
 def SmearFactor(sim_width,sim_mass,data_width,data_mass,p_scale=1):
     return (1/p_scale)*np.sqrt((data_width/data_mass)**2-(sim_width/sim_mass)**2)
 
-def CalcSmearFactor(model='Naive'):
-    mup_P_sim,mum_P_sim,mup_E_sim,mum_E_sim = GetBranches("U1S")
+def CalcSmearFactor(sim_branches,data_branches,model='Naive'):
+    mup_P_sim, mum_P_sim, mup_E_sim, mum_E_sim = UsefulValues(sim_branches)
     sim_mass = Reconstruct(mup_P_sim,mum_P_sim,mup_E_sim,mum_E_sim)
     sim_results = PlotHistogram(sim_mass,"U1S",Output=True,sim=True)
-    mup_P_dat,mum_P_dat,mup_E_dat,mum_E_dat = GetBranches("DATA")
+    mup_P_dat, mum_P_dat, mup_E_dat, mum_E_dat = UsefulValues(data_branches)
     data_mass = Reconstruct(mup_P_dat,mum_P_dat,mup_E_dat,mum_E_dat)
     data_results = PlotHistogram(data_mass,"DATA",Output=True)
     if model !='Naive':
@@ -276,9 +279,12 @@ def main():
     parser.add_argument('--Compare',default="FALSE",type=str)
     args = parser.parse_args()
 
+    sim_branches = GetBranches("U1S")
+    data_branches = GetBranches("DATA")
+
     #If you run compare, that overwrites all other arguments
     if (args.Compare).lower() == "true":
-        success = Comparing()
+        success = Comparing(sim_branches,data_branches)
         return success
 
     if (args.Source).lower() == "d" or (args.Source).lower() == "data":
@@ -298,10 +304,10 @@ def main():
     #Smearing
     if (((args.Smearing).lower() == "on"  or (args.Smearing).lower() == "true") and loc == "U1S") or (args.FullOutput).lower() == "true":
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
-        sigma,sigma_err = CalcSmearFactor()
+        sigma,sigma_err = CalcSmearFactor(sim_branches,data_branches)
         print(f'WOOO got a smearing variable: {sigma} ± {sigma_err}')
         rng = np.random.default_rng(seed=10)
-        mup_P,mum_P,mup_E,mum_E = GetBranches(loc,calibration_factor=factor) #temp solution: needs improving
+        mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches)
         Norm_rand = rng.normal(0,1,size=len(mum_E))
         factor += (Norm_rand*sigma)
         output["Smear_factor"] = (sigma,sigma_err)
@@ -309,13 +315,14 @@ def main():
 
     #scaling
     if  ((args.Calibration).lower()) == "on" or ((args.Calibration).lower() == "true") or ((args.FullOutput).lower() == "true"):
-        c,c_err = CalcScaling()
+        c,c_err = CalcScaling(sim_branches,data_branches)
         print(f'WOOO got a scaling variable: {c} ± {c_err}')
         factor += c
         output["C_ratio"] = (c,c_err)
         filename= filename+"_Scaled"
     
-    #I don't think this is needed
+    ##I don't think this is needed but without it, code does nothing by default (needs fixing)
+    ##Also if this is readded, it needs updating (uses outdated structure)
     # mup_P,mum_P,mup_E,mum_E = GetBranches(loc,calibration_factor=factor)
     # mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     # PlotHistogram(mass,filename)
