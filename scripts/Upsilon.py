@@ -95,8 +95,10 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     fitParam, cov = curve_fit(lambda x, beta, m, loc, scale, Ns, A, B: fitfunc(x, beta, m, loc, scale, Ns, A, B, binwidth), bincenters, massHist, p0=p0, bounds=bounds, maxfev=100000)
     err = np.sqrt(np.diag(cov))
     #print(fitParam,"\n",err)
-    model = fitfunc(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5],fitParam[6],binwidth)
-    plt.plot(bincenters,model,label="Crystall Ball function\nWith Background")
+    model = CrystalBallFitNoBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],binwidth)
+    plt.plot(bincenters,model,label="Crystall Ball function")
+    if not sim:
+        plt.plot(bincenters,fitParam[5]*np.exp(-fitParam[6]*bincenters),label="background")
     #A more accurate fit could be a double tailed crystal ball
     
     #print(f'Saving plot to transient/Upsilon_mass_{filename}.pdf')
@@ -141,13 +143,6 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.2,9.75)))
     scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.2,9.75)))
 
-    #Original
-    # unscaled_sim_massHist = unscaled_sim_massHist + background*(np.sum(unscaled_sim_massHist)/np.sum(data_massHist))
-    # scaled_sim_massHist = scaled_sim_massHist + background*(np.sum(scaled_sim_massHist)/np.sum(data_massHist))
-    # unscaled_sim_massHist = unscaled_sim_massHist * (np.sum(data_massHist)/np.sum(unscaled_sim_massHist))
-    # scaled_sim_massHist = scaled_sim_massHist * (np.sum(data_massHist)/np.sum(scaled_sim_massHist))
-
-    #Idea:
     data_massHist_noBG = data_massHist - background
     data_massHist_noBG[data_massHist_noBG < 0.0] = 0.0
     unscaled_sim_massHist = unscaled_sim_massHist * (np.sum(data_massHist_noBG)/np.sum(unscaled_sim_massHist))
@@ -159,11 +154,6 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     plt.step(bincenters, scaled_sim_massHist+background, where="mid", label="Sim with smearing",color="orange",zorder=2)
     plt.scatter(bincenters, data_massHist, label = "Data", s=2 ,c='black',zorder=3)
     plt.errorbar(bincenters, data_massHist, yerr=np.sqrt(data_massHist),fmt='none')
-
-    # unscaled_sim_massHist = unscaled_sim_massHist + background
-    # scaled_sim_massHist = scaled_sim_massHist + background
-    # plt.step(bincenters,unscaled_sim_massHist,label="Sim without smearing")
-    # plt.step(bincenters,scaled_sim_massHist, label = "sim with smearing")
 
     plt.legend()
     plt.xlabel("Mass / GeV")
@@ -190,7 +180,7 @@ def Comparing():
     
     mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
     data_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S",calibration_factor=1+alpha)
+    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S",calibration_factor=1)
     unscaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     rng = np.random.default_rng(seed=10)
     Norm_rand = rng.normal(0,1,size=len(mum_E))
@@ -223,7 +213,6 @@ def CalcAlpha(m,m_err):
 
 def c_ratio(alph_s,alph_d):
     return (1+alph_d)/(1+alph_s)
-    #I am not 100% sure which way around these should be
 
 def CalcC(alpha_s,alpha_d):
     c = c_ratio(alpha_s[0],alpha_d[0])
@@ -252,26 +241,28 @@ def CalcSmearFactorByMinimise():
     best_sigma = minimize_scalar(width_chi2,args=(data_width[0],data_width[1],mup_P,mum_P,mup_E,mum_E),bounds=(0.0,0.1),method="bounded")
     return best_sigma.x
 
-def SmearFactor(sim_width,sim_mass,data_width,data_mass):
-    return np.sqrt((data_width/data_mass)**2-(sim_width/sim_mass)**2)
+def SmearFactor(sim_width,sim_mass,data_width,data_mass,p_scale=1):
+    return (1/p_scale)*np.sqrt((data_width/data_mass)**2-(sim_width/sim_mass)**2)
 
-def CalcSmearFactor():
-    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
-    sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+def CalcSmearFactor(model='Naive'):
+    mup_P_sim,mum_P_sim,mup_E_sim,mum_E_sim = GetBranches("U1S")
+    sim_mass = Reconstruct(mup_P_sim,mum_P_sim,mup_E_sim,mum_E_sim)
     sim_results = PlotHistogram(sim_mass,"U1S",Output=True,sim=True)
-
-    mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
-    data_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
+    mup_P_dat,mum_P_dat,mup_E_dat,mum_E_dat = GetBranches("DATA")
+    data_mass = Reconstruct(mup_P_dat,mum_P_dat,mup_E_dat,mum_E_dat)
     data_results = PlotHistogram(data_mass,"DATA",Output=True)
+    if model !='Naive':
+        p_scale = np.mean([mup_P_sim,mum_P_sim])#,mup_P_dat,mum_P_dat])
     
     print(f'Data width: {data_results["width"][0]} ± {data_results["width"][1]} \nUnsmeared sim width: {sim_results["width"][0]} ± {sim_results["width"][1]}')
-    sigma = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0])
-    err_due_sim_width = SmearFactor(sim_results["width"][0]+sim_results["width"][1],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0]) - sigma
-    err_due_sim_mass = SmearFactor(sim_results["width"][0],sim_results["mass"][0]+sim_results["mass"][1],data_results["width"][0],data_results["mass"][0]) - sigma
-    err_due_data_width = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0]+data_results["width"][1],data_results["mass"][0]) - sigma
-    err_due_data_mass = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0]+data_results["mass"][1]) - sigma
+    sigma = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0],p_scale)
+    err_due_sim_width = SmearFactor(sim_results["width"][0]+sim_results["width"][1],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0],p_scale) - sigma
+    err_due_sim_mass = SmearFactor(sim_results["width"][0],sim_results["mass"][0]+sim_results["mass"][1],data_results["width"][0],data_results["mass"][0],p_scale) - sigma
+    err_due_data_width = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0]+data_results["width"][1],data_results["mass"][0],p_scale) - sigma
+    err_due_data_mass = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0]+data_results["mass"][1],p_scale) - sigma
     err_sigma = np.sqrt(err_due_sim_width**2+err_due_sim_mass**2+err_due_data_width**2+err_due_data_mass**2)
     return (sigma,err_sigma)
+
 
 def main():
     #This allows for me to pass arguments in to the terminal to change important paramters without changing the code
