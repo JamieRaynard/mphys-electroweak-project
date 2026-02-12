@@ -330,15 +330,30 @@ sim_fits(tmass,simdatam,datam,calibration_factor,True)
 if fname == f"mass-width_values_and_error.txt":
     with uproot.open(f"{DATAIR}/DecayTree__Z__DATA__d13600GeV_24c4.root:DecayTree") as tt:
         magnet_pol=tt.arrays(["yearpol"],library="np")
-        magnet_pol=np.array(magnet_pol["yearpol"])
-        print(magnet_pol)
-        pos_mask= magnet_pol > 0
-        neg_mask= magnet_pol < 0
-        pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
-        neg_datam= {k: v[neg_mask] for k, v in datam.items()}
-        magnet="pos_dipole" 
-        fname="dont_use"
-        sim_fits(tmass,simdatam,pos_datam,calibration_factor,magnet)
-        magnet="neg_dipole" 
-        sim_fits(tmass,simdatam,neg_datam,calibration_factor,magnet)
+    magnet_pol=np.array(magnet_pol["yearpol"])
+    print(magnet_pol)
+    pos_mask= magnet_pol > 0
+    neg_mask= magnet_pol < 0
+    pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
+    neg_datam= {k: v[neg_mask] for k, v in datam.items()}
+
+    # with uproot.open(f"{DATAIR}/DecayTree__Z__Z__d13600GeV_24c4.root:DecayTree") as t:
+    #     magnet_pol=t.arrays(["yearpol"],library="np")
+    # magnet_pol=np.array(magnet_pol["yearpol"])
+    # print(magnet_pol)
+    # pos_mask= magnet_pol > 0
+    # neg_mask= magnet_pol < 0
+    # simpos_datam= {k: v[pos_mask] for k  , v in simdatam.items()}
+    # simneg_datam= {l: w[neg_mask] for l, w in simdatam.items()}
+    # truemass_pos=tmass[pos_mask]
+    # truemass_neg=tmass[neg_mask]
+
+    # calibration_slice_plus=calibration_factor[pos_mask]
+    # calibration_slice_minus=calibration_factor[neg_mask]
+    magnet="pos_dipole" 
+    fname="dont_use"
+
+    sim_fits(tmass,simdatam,pos_datam,calibration_factor,magnet)
+    magnet="neg_dipole" 
+    sim_fits(tmass,simdatam,neg_datam,calibration_factor,magnet)
 # can add  more here qutie easily 

@@ -114,6 +114,12 @@ chi2n=mass_width[4]
 ndfn=mass_width[5]
 corelationn=np.sqrt((mass_width[6])**2)
 
+differnce_mass = np.sqrt((massp-massn)**2)
+differnce_width = np.sqrt((widthp-widthn)**2)
+
+magnet_mass_significance=differnce_mass/(np.sqrt(mass_errorp**2 + mass_errorn**2))
+magnet_width_significance=differnce_width/(np.sqrt(width_errorp**2 + width_errorn**2))
+
 with open("dipole_table.tex", "w") as f:
     f.write(r"\begin{table}[H]" + "\n")
     f.write(r"\centering" + "\n")
@@ -135,4 +141,21 @@ with open("dipole_table.tex", "w") as f:
     f.write(r"\hline" + "\n")
     f.write(r"\end{tabular}" + "\n")
     f.write(r"\caption{Reults for positive and negative dipoles}" + "\n")
+    f.write(r"\end{table}" + "\n")
+
+
+
+with open("dipole_significance_table.tex", "w") as f:
+    f.write(r"\begin{table}[H]" + "\n")
+    f.write(r"\centering" + "\n")
+    f.write(r"\begin{tabular}{lcc}" + "\n")
+    f.write(r"\hline" + "\n")
+    f.write(r"Magnetic Polarity & Mass Significance ($\sigma$) & Width Significance ($\sigma$)\\" + "\n")
+    f.write(r"\hline" + "\n")
+
+    f.write(f"$\pm$ 1 & {magnet_mass_significance:.5f} & {magnet_width_significance:.5f} \\\\\n")
+
+    f.write(r"\hline" + "\n")
+    f.write(r"\end{tabular}" + "\n")
+    f.write(r"\caption{Significance of mass and width differences between magnetic polarities}" + "\n")
     f.write(r"\end{table}" + "\n")
