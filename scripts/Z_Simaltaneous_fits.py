@@ -37,6 +37,8 @@ with uproot.open(f"{DATAIR}/DecayTree__Z__DATA__d13600GeV_24c4.root:DecayTree") 
 
     #momentasim = t.arrays(["mup_PX","mup_PY","mup_PZ","mum_PX" ,"mum_PY" ,"mum_PZ"],library="np")
     datam=tt.arrays(["mum_eta","mum_phi","mum_pt","mup_eta" ,"mup_phi" ,"mup_pt"],library="np")
+    for key in tt:
+        print(key)
 
 if (args.Calibration).lower() == "true":
     try:
@@ -350,6 +352,7 @@ if fname == f"mass-width_values_and_error.txt":
 
     # calibration_slice_plus=calibration_factor[pos_mask]
     # calibration_slice_minus=calibration_factor[neg_mask]
+    
     magnet="pos_dipole" 
     fname="dont_use"
 
