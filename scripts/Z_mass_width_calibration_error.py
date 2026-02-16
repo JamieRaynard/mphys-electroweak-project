@@ -91,3 +91,71 @@ with open("constants.tex", "w") as f:
     f.write(r"\newcommand{\Zmassstaterror}{%.3f}" % mass_error + "\n")
     f.write(r"\newcommand{\Zwidthstaterror}{%.3f}" % width_error + "\n")
     f.write(r"\newcommand{\ZCorrelation}{%.3f}" % corelation + "\n")
+
+
+
+fname7 = "../mphys-electroweak-project/pos_dipole"
+mass_width = np.loadtxt(fname7, dtype=float)
+massp=mass_width[0]
+widthp=mass_width[1]
+mass_errorp=mass_width[2]
+width_errorp=mass_width[3]
+chi2p=mass_width[4]
+ndfp=mass_width[5]
+corelationp=np.sqrt((mass_width[6])**2)
+
+fname8 = "../mphys-electroweak-project/neg_dipole"
+mass_width = np.loadtxt(fname8, dtype=float)
+massn=mass_width[0]
+widthn=mass_width[1]
+mass_errorn=mass_width[2]
+width_errorn=mass_width[3]
+chi2n=mass_width[4]
+ndfn=mass_width[5]
+corelationn=np.sqrt((mass_width[6])**2)
+
+differnce_mass = np.sqrt((massp-massn)**2)
+differnce_width = np.sqrt((widthp-widthn)**2)
+
+magnet_mass_significance=differnce_mass/(np.sqrt(mass_errorp**2 + mass_errorn**2))
+magnet_width_significance=differnce_width/(np.sqrt(width_errorp**2 + width_errorn**2))
+
+with open("dipole_table.tex", "w") as f:
+    f.write(r"\begin{table}[H]" + "\n")
+    f.write(r"\centering" + "\n")
+    f.write(r"\begin{tabular}{lcc}" + "\n")
+    f.write(r"\hline" + "\n")
+    f.write(r"Measuremnt & Positive dipole & Negative dipole\\" + "\n")
+    f.write(r"\hline" + "\n")
+
+    f.write(f"Mass [GeV] & ${massp:.6f} \pm {mass_errorp:.2f}$ & "
+            f"${massn:.6f} \pm {mass_errorn:.2f}$ \\\\\n")
+
+    f.write(f"Width [GeV] & ${widthp:.6f} \pm {width_errorp:.2f}$ & "
+            f"${widthn:.6f} \pm {width_errorn:.2f}$ \\\\\n")
+
+    f.write(f"$\\chi^2$ & {chi2p:.2f} & {chi2n:.2f} \\\\\n")
+
+    f.write(f"ndf & {ndfp:.0f} & {ndfn:.0f} \\\\\n")
+
+    f.write(r"\hline" + "\n")
+    f.write(r"\end{tabular}" + "\n")
+    f.write(r"\caption{Reults for positive and negative dipoles}" + "\n")
+    f.write(r"\end{table}" + "\n")
+
+
+
+with open("dipole_significance_table.tex", "w") as f:
+    f.write(r"\begin{table}[H]" + "\n")
+    f.write(r"\centering" + "\n")
+    f.write(r"\begin{tabular}{lcc}" + "\n")
+    f.write(r"\hline" + "\n")
+    f.write(r"Magnetic Polarity & Mass Significance ($\sigma$) & Width Significance ($\sigma$)\\" + "\n")
+    f.write(r"\hline" + "\n")
+
+    f.write(f"$\pm$ 1 & {magnet_mass_significance:.5f} & {magnet_width_significance:.5f} \\\\\n")
+
+    f.write(r"\hline" + "\n")
+    f.write(r"\end{tabular}" + "\n")
+    f.write(r"\caption{Significance of mass and width differences between magnetic polarities}" + "\n")
+    f.write(r"\end{table}" + "\n")

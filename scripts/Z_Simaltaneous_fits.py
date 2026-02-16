@@ -174,11 +174,11 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     plt.plot(centers, simHist_scaled905_3, '-', linewidth=2, label='scaled-weighted 90.5_3 simulation')
     plt.plot(centers, simHist_scaled91_3, '-', linewidth=2, label='scaled-weighted 91_3 simulation')
     plt.plot(centers, simHist_scaled915_3, '-', linewidth=2, label='scaled-weighted 91.5_3 simulation')
-    plt.title(f"Zreconstructed weight sim ({'real' if use_diagram==True else 'dont-use'})")
+    plt.title(f"Zreconstructed weight sim ({'real' if use_diagram==True else 'magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else 'dont-use'})")
     plt.xlabel("Mass_Gev")
     plt.ylabel("Frequency Density")
     plt.legend(loc='upper right')
-    plt.savefig(f"transient/Zreconstructed weight sim-combined_mess ({'real' if use_diagram==True else 'dont-use'}).pdf")
+    plt.savefig(f"transient/Zreconstructed weight sim-combined_mess ({'real' if use_diagram==True else 'pos-magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else 'dont-use'}).pdf")
     plt.clf()
     plt.figure()
     chi905_1=np.sum(((dataHist-simHist_scaled905_1)**2)/dataHist)
@@ -225,17 +225,31 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     print(f"corelation is {corelation_coefficient}")
     ndf=len(binnweights905_1)-2
     chimin=np.min(chi_values)
-    with open(fname, "w") as f:
-        f.write(f"{mass_result}\n")
-        f.write(f"{width_result}")
-        if fname==f"mass-width_values_and_error.txt":
+    print(chimin)
+    if fname != "dont_use":
+        with open(fname, "w") as f:
+            f.write(f"{mass_result}\n")
+            f.write(f"{width_result}")
+            if fname==f"mass-width_values_and_error.txt":
+                f.write(f"\n{mass_error}\n")
+                f.write(f"{width_error}\n")
+                f.write(f"{chimin}\n")
+                f.write(f"{ndf}\n")
+                f.write(f"{corelation_coefficient}")
+
+        f.close()
+
+    if use_diagram != True:
+        with open(use_diagram, "w") as f:
+            f.write(f"{mass_result}\n")
+            f.write(f"{width_result}")
             f.write(f"\n{mass_error}\n")
             f.write(f"{width_error}\n")
             f.write(f"{chimin}\n")
             f.write(f"{ndf}\n")
             f.write(f"{corelation_coefficient}")
 
-    f.close()
+
 
     # plotting the stack graph with similtanous fits
     #the top half.
@@ -280,7 +294,8 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     ax2.set_xlabel("Dimuon mass GeV")
     ax2.set_ylim(bottom=0.8)
     ax2.legend(loc='upper left',frameon=True, fontsize=8)
-    plt.savefig("transient/Z-stack_similtaneous.pdf")
+    plt.savefig(f"transient/Z-stack_similtaneous ({'real' if use_diagram==True else 'pos-magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else ''}).pdf")
+                
     print(chi_values)
 
     # graph elipse of mass width
@@ -304,6 +319,41 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     ax.legend(loc="upper left") 
     ax.set_xlim(91.13, 91.155) 
     ax.set_ylim(1.965,2.035) 
-    plt.savefig("transient/Z-Error-Ellipse.pdf")
+    plt.savefig(f"transient/Z-Error-Ellipse ({'real' if use_diagram==True else 'pos-magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else ''}).pdf")
 
-sim_fits(tmass,simdatam,datam,calibration_factor,False)
+sim_fits(tmass,simdatam,datam,calibration_factor,True)
+
+
+# this is to test for magnetic monople 
+#real means standard ie can use, watch out that adign the erros will chnage this so real is only trustworthy using general calibration and the run all script
+# make sure that calibration ="true" is used and nothign else or if using other arguenmtns make sure jsut calibration=ture is used last
+if fname == f"mass-width_values_and_error.txt":
+    with uproot.open(f"{DATAIR}/DecayTree__Z__DATA__d13600GeV_24c4.root:DecayTree") as tt:
+        magnet_pol=tt.arrays(["yearpol"],library="np")
+    magnet_pol=np.array(magnet_pol["yearpol"])
+    print(magnet_pol)
+    pos_mask= magnet_pol > 0
+    neg_mask= magnet_pol < 0
+    pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
+    neg_datam= {k: v[neg_mask] for k, v in datam.items()}
+
+    # with uproot.open(f"{DATAIR}/DecayTree__Z__Z__d13600GeV_24c4.root:DecayTree") as t:
+    #     magnet_pol=t.arrays(["yearpol"],library="np")
+    # magnet_pol=np.array(magnet_pol["yearpol"])
+    # print(magnet_pol)
+    # pos_mask= magnet_pol > 0
+    # neg_mask= magnet_pol < 0
+    # simpos_datam= {k: v[pos_mask] for k  , v in simdatam.items()}
+    # simneg_datam= {l: w[neg_mask] for l, w in simdatam.items()}
+    # truemass_pos=tmass[pos_mask]
+    # truemass_neg=tmass[neg_mask]
+
+    # calibration_slice_plus=calibration_factor[pos_mask]
+    # calibration_slice_minus=calibration_factor[neg_mask]
+    magnet="pos_dipole" 
+    fname="dont_use"
+
+    sim_fits(tmass,simdatam,pos_datam,calibration_factor,magnet)
+    magnet="neg_dipole" 
+    sim_fits(tmass,simdatam,neg_datam,calibration_factor,magnet)
+# can add  more here qutie easily 
