@@ -123,20 +123,22 @@ magnet_width_significance=differnce_width/(np.sqrt(width_errorp**2 + width_error
 with open("dipole_table.tex", "w") as f:
     f.write(r"\begin{table}[H]" + "\n")
     f.write(r"\centering" + "\n")
-    f.write(r"\begin{tabular}{lcc}" + "\n")
+    f.write(r"\begin{tabular}{lccc}" + "\n")
     f.write(r"\hline" + "\n")
-    f.write(r"Measuremnt & Positive dipole & Negative dipole\\" + "\n")
+    f.write(r"Measuremnt & Positive dipole & Negative dipole & Significance\\" + "\n")
     f.write(r"\hline" + "\n")
 
-    f.write(f"Mass [GeV] & ${massp:.6f} \pm {mass_errorp:.2f}$ & "
-            f"${massn:.6f} \pm {mass_errorn:.2f}$ \\\\\n")
+    f.write(f"Mass [GeV] & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
+            f"${massn:.5f} \pm {mass_errorn:.2f}$ & "
+            f"${magnet_mass_significance:.5f} $\\\\\n")
 
-    f.write(f"Width [GeV] & ${widthp:.6f} \pm {width_errorp:.2f}$ & "
-            f"${widthn:.6f} \pm {width_errorn:.2f}$ \\\\\n")
+    f.write(f"Width [GeV] & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
+            f"${widthn:.5f} \pm {width_errorn:.2f}$ & "
+            f"${magnet_width_significance:.5f} $ \\\\\n")
 
-    f.write(f"$\\chi^2$ & {chi2p:.2f} & {chi2n:.2f} \\\\\n")
+    f.write(f"$\\chi^2$ & {chi2p:.2f} & {chi2n:.2f} & N/A\\\\\n")
 
-    f.write(f"ndf & {ndfp:.0f} & {ndfn:.0f} \\\\\n")
+    f.write(f"ndf & {ndfp:.0f} & {ndfn:.0f} & N/A\\\\\n")
 
     f.write(r"\hline" + "\n")
     f.write(r"\end{tabular}" + "\n")
@@ -145,17 +147,17 @@ with open("dipole_table.tex", "w") as f:
 
 
 
-with open("dipole_significance_table.tex", "w") as f:
-    f.write(r"\begin{table}[H]" + "\n")
-    f.write(r"\centering" + "\n")
-    f.write(r"\begin{tabular}{lcc}" + "\n")
-    f.write(r"\hline" + "\n")
-    f.write(r"Magnetic Polarity & Mass Significance ($\sigma$) & Width Significance ($\sigma$)\\" + "\n")
-    f.write(r"\hline" + "\n")
+# with open("dipole_significance_table.tex", "w") as f:
+#     f.write(r"\begin{table}[H]" + "\n")
+#     f.write(r"\centering" + "\n")
+#     f.write(r"\begin{tabular}{lcc}" + "\n")
+#     f.write(r"\hline" + "\n")
+#     f.write(r"Magnetic Polarity & Mass Significance ($\sigma$) & Width Significance ($\sigma$)\\" + "\n")
+#     f.write(r"\hline" + "\n")
 
-    f.write(f"$\pm$ 1 & {magnet_mass_significance:.5f} & {magnet_width_significance:.5f} \\\\\n")
+#     f.write(f"$\pm$ 1 & {magnet_mass_significance:.5f} & {magnet_width_significance:.5f} \\\\\n")
 
-    f.write(r"\hline" + "\n")
-    f.write(r"\end{tabular}" + "\n")
-    f.write(r"\caption{Significance of mass and width differences between magnetic polarities}" + "\n")
-    f.write(r"\end{table}" + "\n")
+#     f.write(r"\hline" + "\n")
+#     f.write(r"\end{tabular}" + "\n")
+#     f.write(r"\caption{Significance of mass and width differences between magnetic polarities}" + "\n")
+#     f.write(r"\end{table}" + "\n")
