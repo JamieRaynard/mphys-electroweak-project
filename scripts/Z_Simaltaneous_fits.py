@@ -318,7 +318,7 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     ax.set_title("Mass Width error Ellipse") 
     ax.legend(loc="upper left") 
     ax.set_xlim(91.13, 91.155) 
-    ax.set_ylim(1.965,2.035) 
+    ax.set_ylim(1.98,2.1) 
     plt.savefig(f"transient/Z-Error-Ellipse ({'real' if use_diagram==True else 'pos-magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else ''}).pdf")
 
 sim_fits(tmass,simdatam,datam,calibration_factor,True)
