@@ -273,6 +273,7 @@ def CalcSmearFactor(sim_branches,data_branches,model='Naive'):
     err_due_data_width = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0]+data_results["width"][1],data_results["mass"][0],p_scale) - sigma
     err_due_data_mass = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0]+data_results["mass"][1],p_scale) - sigma
     err_sigma = np.sqrt(err_due_sim_width**2+err_due_sim_mass**2+err_due_data_width**2+err_due_data_mass**2)
+    #sigma = sigma*p_scale #GET RID OF ME
     return (sigma,err_sigma)
 
 

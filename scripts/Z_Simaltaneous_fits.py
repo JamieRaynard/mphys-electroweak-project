@@ -62,17 +62,18 @@ if (args.Calibration).lower() == "true":
         
         rng = np.random.default_rng(seed=10)
         Norm_rand = rng.normal(0,1,size=len(tmass))
-        alpha = 1 - C_rat
-        calibration_factor = 1+alpha+Norm_rand*Smear_factor
+        Smear_rand = Norm_rand*Smear_factor
+        calibration_factor = (C_rat,Smear_rand)
 
         print(f'Woo the correction is now  {calibration_factor}')
 
     except FileNotFoundError:
         print("Please run the script Upsilon.py first to get a calibration value")
         #This is where I would return to stop the script if we were inside a main func to avoid error
-        calibration_factor=1
+        calibration_factor=None
+
 else:
-    calibration_factor = 1
+    calibration_factor = None
     fname = f"useless.txt"
 
 
@@ -85,12 +86,23 @@ def conaeq(reconmass,cal):
     mmpt=reconmass["mum_pt"] 
     mmphi=reconmass["mum_phi"]
     # calibration being applied here
-    mpx=mppt*np.cos(mpphi)*cal
-    mmx=mmpt*np.cos(mmphi)*cal
-    mpy=mppt*np.sin(mpphi)*cal
-    mmy=mmpt*np.sin(mmphi)*cal
-    mpz=mppt*np.sinh(mpe)*cal
-    mmz=mmpt*np.sinh(mme)*cal
+    mpx=mppt*np.cos(mpphi)
+    mmx=mmpt*np.cos(mmphi)
+    mpy=mppt*np.sin(mpphi)
+    mmy=mmpt*np.sin(mmphi)
+    mpz=mppt*np.sinh(mpe)
+    mmz=mmpt*np.sinh(mme)
+
+    mup_P = np.array([mpx,mpy,mpz])
+    mum_P = np.array([mmx,mmy,mmz])
+
+    if cal:
+        #x = cal[1]/(np.mean([mup_P,mum_P]))
+        #cal[1] = x
+        mup_P = 1/(cal[0]*(1/mup_P)+cal[1])
+        mum_P = -1/(cal[0]*(-1/mum_P)+cal[1])
+        mpx,mpy,mpz = mup_P
+        mmx,mmy,mmz = mum_P
 
     m=[]
     Ep=[]
@@ -110,7 +122,7 @@ def fiteq(x,a,b,m,w,scale):
 
 def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     c=calibration_factor #error in calibration
-    dataHist,databinn,_d=plt.hist(conaeq(datam,1), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
+    dataHist,databinn,_d=plt.hist(conaeq(datam,None), bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
     trmassHist,binn,_t=plt.hist(tmass, bins=np.linspace(80.0,100.0,50), histtype="step",label="Z-true",density=True,linewidth=1) #for true mass
     centers=0.5*(binn[1:]+binn[:-1])
     w=3
