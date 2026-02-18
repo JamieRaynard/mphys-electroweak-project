@@ -32,11 +32,23 @@ def GetBranches(loc):
 def UsefulValues(data,calibration_factor=1,smear=None):
     MUON_MASS = 0.1057
     mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
+    # if smear:
+    #     rng_p = np.random.default_rng(seed=10)
+    #     rng_m = np.random.default_rng(seed=11)
+    #     Norm_rand_p = rng_p.normal(0,1,size=len(data["mup_PX"]))
+    #     Norm_rand_m = rng_m.normal(0,1,size=len(data["mup_PX"]))
+    #     mup_P = 1/(calibration_factor*(1/mup_P)+Norm_rand_p*smear)
+    #     mum_P = -1/(calibration_factor*(-1/mum_P)+Norm_rand_m*smear)
+    # else:
+    #     mup_P = mup_P*calibration_factor
+    #     mum_P = mum_P*calibration_factor
     if smear:
-        rng = np.random.default_rng(seed=10)
-        Norm_rand = rng.normal(0,1,size=len(data["mup_PX"]))
-        mup_P = 1/(calibration_factor*(1/mup_P)+Norm_rand*smear)
-        mum_P = -1/(calibration_factor*(-1/mum_P)+Norm_rand*smear)
+        rng_p = np.random.default_rng(seed=10)
+        rng_m = np.random.default_rng(seed=11)
+        Norm_rand_p = rng_p.normal(0,1,size=len(data["mup_PX"]))
+        Norm_rand_m = rng_m.normal(0,1,size=len(data["mup_PX"]))
+        mup_P = mup_P*calibration_factor*(1-mup_P*Norm_rand_p*smear)
+        mum_P = mum_P*calibration_factor*(1-mum_P*Norm_rand_m*smear)
     else:
         mup_P = mup_P*calibration_factor
         mum_P = mum_P*calibration_factor
@@ -192,9 +204,7 @@ def Comparing(sim_branches,data_branches):
     mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches)
     unscaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
 
-    rng = np.random.default_rng(seed=10)
-    Norm_rand = rng.normal(0,1,size=len(mum_E))
-    calibration_factor = 1+alpha
+    calibration_factor = 1+alpha    
     mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches,calibration_factor=calibration_factor,smear=Smear_factor)
     scaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass)
