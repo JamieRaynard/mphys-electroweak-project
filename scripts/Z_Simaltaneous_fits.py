@@ -60,10 +60,7 @@ if (args.Calibration).lower() == "true":
             C_rat=C_rat-C_err
             fname = f"C_rat_minus.txt"
         
-        rng = np.random.default_rng(seed=10)
-        Norm_rand = rng.normal(0,1,size=len(tmass))
-        Smear_rand = Norm_rand*Smear_factor
-        calibration_factor = (C_rat,Smear_rand)
+        calibration_factor = (C_rat,Smear_factor)
 
         print(f'Woo the correction is now  {calibration_factor}')
 
@@ -99,8 +96,14 @@ def conaeq(reconmass,cal):
     if cal:
         #x = cal[1]/(np.mean([mup_P,mum_P]))
         #cal[1] = x
-        mup_P = 1/(cal[0]*(1/mup_P)+cal[1])
-        mum_P = -1/(cal[0]*(-1/mum_P)+cal[1])
+        #mup_P = 1/(cal[0]*(1/mup_P)+cal[1])
+        #mum_P = -1/(cal[0]*(-1/mum_P)+cal[1])
+        rng_p = np.random.default_rng(seed=10)
+        rng_m = np.random.default_rng(seed=11)
+        Norm_rand_p = rng_p.normal(0,1,size=len(mpx))
+        Norm_rand_m = rng_m.normal(0,1,size=len(mpx))
+        mup_P = mup_P*cal[0]*(1-mup_P*Norm_rand_p*cal[1])
+        mum_P = mum_P*cal[0]*(1-mum_P*Norm_rand_m*cal[1])
         mpx,mpy,mpz = mup_P
         mmx,mmy,mmz = mum_P
 
