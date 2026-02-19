@@ -102,8 +102,8 @@ def conaeq(reconmass,cal):
         rng_m = np.random.default_rng(seed=11)
         Norm_rand_p = rng_p.normal(0,1,size=len(mpx))
         Norm_rand_m = rng_m.normal(0,1,size=len(mpx))
-        mup_P = mup_P*cal[0]*(1-mup_P*Norm_rand_p*cal[1])
-        mum_P = mum_P*cal[0]*(1-mum_P*Norm_rand_m*cal[1])
+        mup_P = mup_P*cal[0]*(1+mup_P*Norm_rand_p*cal[1])
+        mum_P = mum_P*cal[0]*(1+mum_P*Norm_rand_m*cal[1])
         mpx,mpy,mpz = mup_P
         mmx,mmy,mmz = mum_P
 
