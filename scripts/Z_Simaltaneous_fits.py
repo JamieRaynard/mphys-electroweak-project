@@ -37,6 +37,8 @@ with uproot.open(f"{DATAIR}/DecayTree__Z__DATA__d13600GeV_24c4.root:DecayTree") 
 
     #momentasim = t.arrays(["mup_PX","mup_PY","mup_PZ","mum_PX" ,"mum_PY" ,"mum_PZ"],library="np")
     datam=tt.arrays(["mum_eta","mum_phi","mum_pt","mup_eta" ,"mup_phi" ,"mup_pt"],library="np")
+    for key in tt:
+        print(key)
 
 if (args.Calibration).lower() == "true":
     try:
@@ -174,11 +176,11 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     plt.plot(centers, simHist_scaled905_3, '-', linewidth=2, label='scaled-weighted 90.5_3 simulation')
     plt.plot(centers, simHist_scaled91_3, '-', linewidth=2, label='scaled-weighted 91_3 simulation')
     plt.plot(centers, simHist_scaled915_3, '-', linewidth=2, label='scaled-weighted 91.5_3 simulation')
-    plt.title(f"Zreconstructed weight sim ({'real' if use_diagram==True else 'magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else 'dont-use'})")
+    plt.title(f"Zreconstructed weight sim ({'real' if use_diagram==True else 'Higher_Pt' if use_diagram=='upper_half_P' else 'Lower_Pt' if use_diagram=='lower_half_P' else 'magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else '0__π' if use_diagram== '0__π' else '-0__π' if use_diagram== '-0__π' else 'dont-use'})")
     plt.xlabel("Mass_Gev")
     plt.ylabel("Frequency Density")
     plt.legend(loc='upper right')
-    plt.savefig(f"transient/Zreconstructed weight sim-combined_mess ({'real' if use_diagram==True else 'pos-magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else 'dont-use'}).pdf")
+    plt.savefig(f"transient/Zreconstructed weight sim-combined_mess ({'real' if use_diagram==True else 'Higher_Pt' if use_diagram=='upper_half_P' else 'Lower_Pt' if use_diagram=='lower_half_P' else 'pos-magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else '0__π' if use_diagram== '0__π' else '-0__π' if use_diagram== '-0__π' else 'dont-use'}).pdf")
     plt.clf()
     plt.figure()
     chi905_1=np.sum(((dataHist-simHist_scaled905_1)**2)/dataHist)
@@ -294,13 +296,13 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     ax2.set_xlabel("Dimuon mass GeV")
     ax2.set_ylim(bottom=0.8)
     ax2.legend(loc='upper left',frameon=True, fontsize=8)
-    plt.savefig(f"transient/Z-stack_similtaneous ({'real' if use_diagram==True else 'pos-magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else ''}).pdf")
+    plt.savefig(f"transient/Z-stack_similtaneous ({'real' if use_diagram==True else 'Higher_Pt' if use_diagram=='upper_half_P' else 'Lower_Pt' if use_diagram=='lower_half_P' else 'pos-magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else '0__π' if use_diagram== '0__π' else '-0__π' if use_diagram== '-0__π' else ''}).pdf")
                 
     print(chi_values)
 
     # graph elipse of mass width
     plt.figure()
-    eigenvalues , eigenvectors  = np.linalg.eigh(covariance_matrix)
+    eigenvalues , eigenvectors  = np.linalg.eigh(covariance_matrix) #data results---------------------
     order = eigenvalues.argsort()[::-1] 
     eigenvalues = eigenvalues[order]
     eigenvectors=eigenvectors[:, order]  #making the bigegst eignecalue and coresponding vector be first in order
@@ -312,14 +314,35 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram):
     fig, ax = plt.subplots()
     ellipse = Ellipse( (mass_result, width_result), width=major_axis_length, height=minor_axis_length, angle=theta, edgecolor='red', facecolor='none', linewidth=2)
     ax.add_patch(ellipse)
-    ax.scatter(mass_result, width_result, color='blue', label='Measurement')
+    ax.scatter(mass_result, width_result, color='red', label='Experimental Measurement')
     ax.set_xlabel("Mass") 
     ax.set_ylabel("Width") 
     ax.set_title("Mass Width error Ellipse") 
+    
+    ax.set_xlim(91.13, 91.19) 
+    ax.set_ylim(1.95,2.55)
+    theory_corelation=0.29342  #Theory------------------------------
+    theory_mass=91.1875
+    theory_massE=0.0021
+    theory_width=2.4955
+    theory_widthE=0.0023
+    covariance_matrix = np.array([
+    [theory_massE**2                             , theory_corelation*theory_massE*theory_widthE],  # 0.01 is the estiamte of the corelation coefficnet for theroretical cahnged to what a paper gave J blas electoweak fit
+    [theory_corelation*theory_massE*theory_widthE, theory_widthE**2 ]                   ]) 
+    eigenvalues,eigenvectors  = np.linalg.eigh(covariance_matrix)
+    order = eigenvalues.argsort()[::-1] 
+    eigenvalues = eigenvalues[order]
+    eigenvectors=eigenvectors[:, order]  #making the bigegst eignecalue and coresponding vector be first in order
+    major_axis_vector = eigenvectors[:,0]
+    vx, vy = major_axis_vector[0], major_axis_vector[1]
+    theta = np.degrees(np.arctan2(vy, vx))
+    major_axis_length = 2 * np.sqrt(eigenvalues[0]) 
+    minor_axis_length = 2 * np.sqrt(eigenvalues[1])
+    ellipse2 = Ellipse( (theory_mass, theory_width), width=major_axis_length, height=minor_axis_length, angle=theta, edgecolor='blue', facecolor='none', linewidth=2)
+    ax.add_patch(ellipse2)
+    ax.scatter(theory_mass, theory_width, color='blue', label='standard model theory')
     ax.legend(loc="upper left") 
-    ax.set_xlim(91.13, 91.155) 
-    ax.set_ylim(1.98,2.1) 
-    plt.savefig(f"transient/Z-Error-Ellipse ({'real' if use_diagram==True else 'pos-magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else ''}).pdf")
+    plt.savefig(f"transient/Z-Error-Ellipse ({'real' if use_diagram==True else 'Higher_Pt' if use_diagram=='upper_half_P' else 'Lower_Pt' if use_diagram=='lower_half_P' else 'pos-magnet' if use_diagram== 'pos_dipole' else 'neg-magnet' if use_diagram== 'neg_dipole' else '0__π' if use_diagram== '0__π' else '-0__π' if use_diagram== '-0__π' else ''}).pdf")
 
 sim_fits(tmass,simdatam,datam,calibration_factor,True)
 
@@ -330,30 +353,39 @@ sim_fits(tmass,simdatam,datam,calibration_factor,True)
 if fname == f"mass-width_values_and_error.txt":
     with uproot.open(f"{DATAIR}/DecayTree__Z__DATA__d13600GeV_24c4.root:DecayTree") as tt:
         magnet_pol=tt.arrays(["yearpol"],library="np")
+        Dimuon_P=tt.arrays(["V_PT"],library="np")
     magnet_pol=np.array(magnet_pol["yearpol"])
-    print(magnet_pol)
+    print(f"magnet valeus are { magnet_pol}")
     pos_mask= magnet_pol > 0
     neg_mask= magnet_pol < 0
     pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
     neg_datam= {k: v[neg_mask] for k, v in datam.items()}
-
-    # with uproot.open(f"{DATAIR}/DecayTree__Z__Z__d13600GeV_24c4.root:DecayTree") as t:
-    #     magnet_pol=t.arrays(["yearpol"],library="np")
-    # magnet_pol=np.array(magnet_pol["yearpol"])
-    # print(magnet_pol)
-    # pos_mask= magnet_pol > 0
-    # neg_mask= magnet_pol < 0
-    # simpos_datam= {k: v[pos_mask] for k  , v in simdatam.items()}
-    # simneg_datam= {l: w[neg_mask] for l, w in simdatam.items()}
-    # truemass_pos=tmass[pos_mask]
-    # truemass_neg=tmass[neg_mask]
-
-    # calibration_slice_plus=calibration_factor[pos_mask]
-    # calibration_slice_minus=calibration_factor[neg_mask]
     magnet="pos_dipole" 
     fname="dont_use"
-
     sim_fits(tmass,simdatam,pos_datam,calibration_factor,magnet)
     magnet="neg_dipole" 
     sim_fits(tmass,simdatam,neg_datam,calibration_factor,magnet)
 # can add  more here qutie easily 
+# this is splitting up agnles azimuthal of positive muon in detector
+
+    muP_thi=np.array(datam["mup_phi"])
+    pos_mask= muP_thi > 0
+    neg_mask= muP_thi < 0
+    pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
+    neg_datam= {k: v[neg_mask] for k, v in datam.items()}
+    angle="0__π" 
+
+    sim_fits(tmass,simdatam,pos_datam,calibration_factor,angle)
+    angle="-π__0" 
+    sim_fits(tmass,simdatam,neg_datam,calibration_factor,angle)
+# splitting by transeverse muon momentum 
+    Dimuon_P=np.array(Dimuon_P["V_PT"])
+    print(np.mean(Dimuon_P))
+    pos_mask= Dimuon_P > 18.3
+    neg_mask=Dimuon_P <= 18.3
+    pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
+    neg_datam= {k: v[neg_mask] for k, v in datam.items()}
+    dimuon="upper_half_P"
+    sim_fits(tmass,simdatam,pos_datam,calibration_factor,dimuon)
+    dimuon="lower_half_P"
+    sim_fits(tmass,simdatam,neg_datam,calibration_factor,dimuon)

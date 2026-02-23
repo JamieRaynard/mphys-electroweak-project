@@ -123,20 +123,22 @@ magnet_width_significance=differnce_width/(np.sqrt(width_errorp**2 + width_error
 with open("dipole_table.tex", "w") as f:
     f.write(r"\begin{table}[H]" + "\n")
     f.write(r"\centering" + "\n")
-    f.write(r"\begin{tabular}{lcc}" + "\n")
+    f.write(r"\begin{tabular}{lccc}" + "\n")
     f.write(r"\hline" + "\n")
-    f.write(r"Measuremnt & Positive dipole & Negative dipole\\" + "\n")
+    f.write(r"Measuremnt & Positive dipole & Negative dipole & Significance\\" + "\n")
     f.write(r"\hline" + "\n")
 
-    f.write(f"Mass [GeV] & ${massp:.6f} \pm {mass_errorp:.2f}$ & "
-            f"${massn:.6f} \pm {mass_errorn:.2f}$ \\\\\n")
+    f.write(f"Mass [GeV] & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
+            f"${massn:.5f} \pm {mass_errorn:.2f}$ & "
+            f"${magnet_mass_significance:.5f} $\\\\\n")
 
-    f.write(f"Width [GeV] & ${widthp:.6f} \pm {width_errorp:.2f}$ & "
-            f"${widthn:.6f} \pm {width_errorn:.2f}$ \\\\\n")
+    f.write(f"Width [GeV] & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
+            f"${widthn:.5f} \pm {width_errorn:.2f}$ & "
+            f"${magnet_width_significance:.5f} $ \\\\\n")
 
-    f.write(f"$\\chi^2$ & {chi2p:.2f} & {chi2n:.2f} \\\\\n")
+    f.write(f"$\\chi^2$ & {chi2p:.2f} & {chi2n:.2f} & N/A\\\\\n")
 
-    f.write(f"ndf & {ndfp:.0f} & {ndfn:.0f} \\\\\n")
+    f.write(f"ndf & {ndfp:.0f} & {ndfn:.0f} & N/A\\\\\n")
 
     f.write(r"\hline" + "\n")
     f.write(r"\end{tabular}" + "\n")
@@ -144,18 +146,102 @@ with open("dipole_table.tex", "w") as f:
     f.write(r"\end{table}" + "\n")
 
 
+fname9 = "../mphys-electroweak-project/0__π"
+mass_width = np.loadtxt(fname9, dtype=float)
+massp=mass_width[0]
+widthp=mass_width[1]
+mass_errorp=mass_width[2]
+width_errorp=mass_width[3]
+chi2p=mass_width[4]
+ndfp=mass_width[5]
+corelationp=np.sqrt((mass_width[6])**2)
 
-with open("dipole_significance_table.tex", "w") as f:
+fname10 = "../mphys-electroweak-project/-π__0"
+mass_width = np.loadtxt(fname10, dtype=float)
+massn=mass_width[0]
+widthn=mass_width[1]
+mass_errorn=mass_width[2]
+width_errorn=mass_width[3]
+chi2n=mass_width[4]
+ndfn=mass_width[5]
+corelationn=np.sqrt((mass_width[6])**2)
+
+differnce_mass = np.sqrt((massp-massn)**2)
+differnce_width = np.sqrt((widthp-widthn)**2)
+
+magnet_mass_significance=differnce_mass/(np.sqrt(mass_errorp**2 + mass_errorn**2))
+magnet_width_significance=differnce_width/(np.sqrt(width_errorp**2 + width_errorn**2))
+with open("Angle_table.tex", "w") as f:
     f.write(r"\begin{table}[H]" + "\n")
     f.write(r"\centering" + "\n")
-    f.write(r"\begin{tabular}{lcc}" + "\n")
+    f.write(r"\begin{tabular}{lccc}" + "\n")
     f.write(r"\hline" + "\n")
-    f.write(r"Magnetic Polarity & Mass Significance ($\sigma$) & Width Significance ($\sigma$)\\" + "\n")
+    f.write(r"Measuremnt & angle range 0-$\pi$ & angle range-$\pi$-0 & Significance\\" + "\n")
     f.write(r"\hline" + "\n")
 
-    f.write(f"$\pm$ 1 & {magnet_mass_significance:.5f} & {magnet_width_significance:.5f} \\\\\n")
+    f.write(f"Mass [GeV] & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
+            f"${massn:.5f} \pm {mass_errorn:.2f}$ & "
+            f"${magnet_mass_significance:.5f} $\\\\\n")
+
+    f.write(f"Width [GeV] & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
+            f"${widthn:.5f} \pm {width_errorn:.2f}$ & "
+            f"${magnet_width_significance:.5f} $ \\\\\n")
+
+    f.write(f"$\\chi^2$ & {chi2p:.2f} & {chi2n:.2f} & N/A\\\\\n")
+
+    f.write(f"ndf & {ndfp:.0f} & {ndfn:.0f} & N/A\\\\\n")
 
     f.write(r"\hline" + "\n")
     f.write(r"\end{tabular}" + "\n")
-    f.write(r"\caption{Significance of mass and width differences between magnetic polarities}" + "\n")
+    f.write(r"\caption{Reults for angles between 0 and $\pi$ and -$\pi$ to 0}" + "\n")
+    f.write(r"\end{table}" + "\n")
+
+fname11 = "../mphys-electroweak-project/lower_half_P"
+mass_width = np.loadtxt(fname11, dtype=float)
+massp=mass_width[0]
+widthp=mass_width[1]
+mass_errorp=mass_width[2]
+width_errorp=mass_width[3]
+chi2p=mass_width[4]
+ndfp=mass_width[5]
+corelationp=np.sqrt((mass_width[6])**2)
+
+fname12 = "../mphys-electroweak-project/upper_half_P"
+mass_width = np.loadtxt(fname12, dtype=float)
+massn=mass_width[0]
+widthn=mass_width[1]
+mass_errorn=mass_width[2]
+width_errorn=mass_width[3]
+chi2n=mass_width[4]
+ndfn=mass_width[5]
+corelationn=np.sqrt((mass_width[6])**2)
+
+differnce_mass = np.sqrt((massp-massn)**2)
+differnce_width = np.sqrt((widthp-widthn)**2)
+
+magnet_mass_significance=differnce_mass/(np.sqrt(mass_errorp**2 + mass_errorn**2))
+magnet_width_significance=differnce_width/(np.sqrt(width_errorp**2 + width_errorn**2))
+with open("Dimuon-transverse-P.tex", "w") as f:
+    f.write(r"\begin{table}[H]" + "\n")
+    f.write(r"\centering" + "\n")
+    f.write(r"\begin{tabular}{lccc}" + "\n")
+    f.write(r"\hline" + "\n")
+    f.write(r"Measuremnt & 0-18.3 Gev & $>$ 18.3Gev  & Significance\\" + "\n")
+    f.write(r"\hline" + "\n")
+
+    f.write(f"Mass [GeV] & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
+            f"${massn:.5f} \pm {mass_errorn:.2f}$ & "
+            f"${magnet_mass_significance:.5f} $\\\\\n")
+
+    f.write(f"Width [GeV] & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
+            f"${widthn:.5f} \pm {width_errorn:.2f}$ & "
+            f"${magnet_width_significance:.5f} $ \\\\\n")
+
+    f.write(f"$\\chi^2$ & {chi2p:.2f} & {chi2n:.2f} & N/A\\\\\n")
+
+    f.write(f"ndf & {ndfp:.0f} & {ndfn:.0f} & N/A\\\\\n")
+
+    f.write(r"\hline" + "\n")
+    f.write(r"\end{tabular}" + "\n")
+    f.write(r"\caption{Reults for Dimuon transverse moemntum splitting up data at 18.3 Gev}" + "\n")
     f.write(r"\end{table}" + "\n")
