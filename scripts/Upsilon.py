@@ -51,16 +51,6 @@ def Selection(data):
 def UsefulValues(data,calibration_factor=1,smear=None):
     MUON_MASS = 0.1057
     mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
-    # if smear:
-    #     rng_p = np.random.default_rng(seed=10)
-    #     rng_m = np.random.default_rng(seed=11)
-    #     Norm_rand_p = rng_p.normal(0,1,size=len(data["mup_PX"]))
-    #     Norm_rand_m = rng_m.normal(0,1,size=len(data["mup_PX"]))
-    #     mup_P = 1/(calibration_factor*(1/mup_P)+Norm_rand_p*smear)
-    #     mum_P = -1/(calibration_factor*(-1/mum_P)+Norm_rand_m*smear)
-    # else:
-    #     mup_P = mup_P*calibration_factor
-    #     mum_P = mum_P*calibration_factor
     if smear:
         rng_p = np.random.default_rng(seed=10)
         rng_m = np.random.default_rng(seed=11)
@@ -138,7 +128,6 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
         plt.plot(bincenters,fitParam[7]*np.exp(-fitParam[8]*bincenters)*binwidth,label="background",color="blue")
         combined_model = CrystalBallFitBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5],fitParam[6],fitParam[7],fitParam[8],binwidth)
         plt.plot(bincenters,combined_model,label="combined",color="purple")
-    #A more accurate fit could be a double tailed crystal ball
     
     #print(f'Saving plot to transient/Upsilon_mass_{filename}.pdf')
 
@@ -360,16 +349,6 @@ def main():
         output["C_ratio"] = (c,c_err)
         filename= filename+"_Scaled"
     
-    ##I don't think this is needed but without it, code does nothing by default (needs fixing)
-    ##Also if this is readded, it needs updating (uses outdated structure)
-    # mup_P,mum_P,mup_E,mum_E = GetBranches(loc,calibration_factor=factor)
-    # mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    # PlotHistogram(mass,filename)
-    # if (args.FullOutput).lower() == "true":
-    #     mup_P,mum_P,mup_E,mum_E = GetBranches("DATA",calibration_factor=factor)
-    #     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    #     PlotHistogram(mass,"DATA_Smeared_Scaled")
-
     with open("Calibration_output.json","w") as OutputFile:
             dump(output,OutputFile,indent=2)
 
