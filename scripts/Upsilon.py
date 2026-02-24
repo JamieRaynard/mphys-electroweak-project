@@ -157,8 +157,8 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
         return 0
 
 def EffectiveWidth(N,scale,F,Z):
-    #return np.sqrt((N*scale**2 + F*(Z*scale)**2)/(N+F))
-    return scale
+    return np.sqrt((N*scale**2 + F*(Z*scale)**2)/(N+F))
+    #return scale
 
 def CalcEffectiveWidth(N,scale,F,Z,N_err,scale_err,F_err,Z_err):
     eff_width = EffectiveWidth(N,scale,F,Z)
