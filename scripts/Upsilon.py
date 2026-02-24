@@ -26,8 +26,27 @@ def GetBranches(loc):
     DATADIR="/storage/epp2/phshgg/Public/MPhysProject_2025_2026/tuples/0/"
     with uproot.open(f"{DATADIR}/DecayTree__U1S__{loc}__d13600GeV_24c4.root:DecayTree") as t:
         Rawdata = t.arrays(["mup_pt","mup_eta","mup_phi","mum_pt","mum_eta","mum_phi"],library="np")
+    Rawdata = Selection(Rawdata)
     data = ConvertCoords(Rawdata) #root file is in eta,phi but we want px,py,pz
     return data 
+
+def Selection(data):
+    print("Candidates before selection: ",len(data['mup_pt']))
+    masks = {
+        'mup_eta_low': (data['mup_eta'] > 2),
+        'mup_eta_high': (data['mup_eta'] < 5),
+        'mum_eta_low': (data['mum_eta'] > 2),
+        'mum_eta_high': (data['mum_eta'] < 5),
+        'mup_PT': (data['mup_pt'] > 5),
+        'mum_PT': (data['mum_pt'] > 5),
+    }
+    mask_tot = data["mup_pt"] > 0
+    for mask in masks:
+        mask_tot = mask_tot & masks[mask]
+    for quant in data:
+        data[quant] = data[quant][mask_tot]
+    print("Candidatates after selection: ",len(data['mup_pt']))
+    return data
 
 def UsefulValues(data,calibration_factor=1,smear=None):
     MUON_MASS = 0.1057
@@ -100,7 +119,7 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
         fitfunc = CrystalBallFitNoBg
         #p0[5] = 0.0
         #p0[6] = 0.0
-        p0 = [1.35259258,3.40023716,9.45816238,4.00892327e-02,4.91203393e+05,0.5*N_tot,0.1,0.0,0.0]
+        p0 = [1.35259258,3.40023716,9.45816238,4.00892327e-02,4.91203393e+04,0.5*N_tot,0.1,0.0,0.0]
         # p0 = [1.17968836, 2.84337456, 9.45874253, 4.69999659e-02, 3.75594873e+05, 3.52255401e+05, 0.75, 0.0, 0.0]
         # p0 = [1.87514072,5.77014894,9.45767286,3.67106879e-02,3.96585919e+05,1.56756017e+05,1.5,0.0,0.0]
         if test:
