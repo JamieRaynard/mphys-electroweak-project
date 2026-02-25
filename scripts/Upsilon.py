@@ -157,8 +157,8 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
         return 0
 
 def EffectiveWidth(N,scale,F,Z):
-    return np.sqrt((N*scale**2 + F*(Z*scale)**2)/(N+F))
-    #return scale
+    #return np.sqrt((N*scale**2 + F*(Z*scale)**2)/(N+F))
+    return scale
 
 def CalcEffectiveWidth(N,scale,F,Z,N_err,scale_err,F_err,Z_err):
     eff_width = EffectiveWidth(N,scale,F,Z)
@@ -275,7 +275,9 @@ def CalcSmearFactor(sim_branches,data_branches,model='Naive'):
     data_mass = Reconstruct(mup_P_dat,mum_P_dat,mup_E_dat,mum_E_dat)
     data_results = PlotHistogram(data_mass,"DATA",Output=True)
     if model !='Naive':
-        p_scale = np.mean([mup_P_sim,mum_P_sim])#,mup_P_dat,mum_P_dat])
+        mup_P_mag = np.sqrt(mup_P_sim[0]**2+mup_P_sim[1]**2+mup_P_sim[2]**2)
+        mum_P_mag = np.sqrt(mum_P_sim[0]**2+mum_P_sim[1]**2+mum_P_sim[2]**2)
+        p_scale = np.mean([mup_P_mag,mum_P_mag])#,mup_P_dat,mum_P_dat])
     else:
         p_scale = 1
     
