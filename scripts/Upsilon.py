@@ -33,10 +33,10 @@ def GetBranches(loc):
 def Selection(data):
     print("Candidates before selection: ",len(data['mup_pt']))
     masks = {
-        'mup_eta_low': (data['mup_eta'] > 2),
-        'mup_eta_high': (data['mup_eta'] < 5),
-        'mum_eta_low': (data['mum_eta'] > 2),
-        'mum_eta_high': (data['mum_eta'] < 5),
+        'mup_eta_low': (data['mup_eta'] > 2.2),
+        'mup_eta_high': (data['mup_eta'] < 4.4),
+        'mum_eta_low': (data['mum_eta'] > 2.2),
+        'mum_eta_high': (data['mum_eta'] < 4.4),
         'mup_PT': (data['mup_pt'] > 5),
         'mum_PT': (data['mum_pt'] > 5),
     }
