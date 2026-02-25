@@ -92,7 +92,7 @@ def Reconstruct(mup_P,mum_P,mup_E,mum_E):
 #loc and smear are just variables to determine the file name the graph will be saved under
 def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     #xmassHist, xbins, x = plt.hist(mass,bins=100,range=(9.2,9.75),histtype='step')
-    massHist,bins = np.histogram(mass,bins=100,range=(9.2,9.750))
+    massHist,bins = np.histogram(mass,bins=100,range=(9.15,9.750))
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -109,7 +109,7 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
         fitfunc = CrystalBallFitNoBg
         #p0[5] = 0.0
         #p0[6] = 0.0
-        p0 = [1.35259258,3.40023716,9.45816238,4.00892327e-02,4.91203393e+04,0.5*N_tot,0.1,0.0,0.0]
+        p0 = [1.35259258,3.40023716,9.45816238,4.00892327e-02,0.8*N_tot,0.5*N_tot,0.1,0.0,0.0]
         # p0 = [1.17968836, 2.84337456, 9.45874253, 4.69999659e-02, 3.75594873e+05, 3.52255401e+05, 0.75, 0.0, 0.0]
         # p0 = [1.87514072,5.77014894,9.45767286,3.67106879e-02,3.96585919e+05,1.56756017e+05,1.5,0.0,0.0]
         if test:
@@ -170,7 +170,7 @@ def CalcEffectiveWidth(N,scale,F,Z,N_err,scale_err,F_err,Z_err):
     return (eff_width,width_err_tot)
 
 def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
-    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.2,9.75))
+    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.15,9.75))
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -183,8 +183,8 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     fitParam = PlotHistogram(data_mass,'DATA_fit',Output=True)
     background = fitParam["A"][0]*np.exp(-1*float(fitParam["B"][0])*bincenters)*binwidth
 
-    unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.2,9.75)))
-    scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.2,9.75)))
+    unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.15,9.75)))
+    scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.15,9.75)))
 
     data_massHist_noBG = data_massHist - background
     data_massHist_noBG[data_massHist_noBG < 0.0] = 0.0
