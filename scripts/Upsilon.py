@@ -8,35 +8,50 @@ import argparse
 from scipy.stats import crystalball
 from json import dump,load
 
-#This is the Gaussian fit that I tried before the Crytall Ball, it is better at capturing the right tail
-def ResFit(x,total,mean,sd,A,B):
-    term = -0.5*((x-mean)**2 / sd**2)
-    return A*np.exp(-B*x) + total / (np.sqrt(2*np.pi)*sd) * np.exp(term) #+D
-
-#This Crystal Ball Fuction better encapsulates the QED radiative tail on the left side of the curve
 #from scipy.stats documentation crystallball(x,beta,m): x = (x-mean)/sd
 #Needed the loc and scale to act analogous to the mean and sd in a Gaussian
-def CrystalBallFitBg(x,beta,m,loc,scale,N,A,B,binwidth):
-    return (N*crystalball.pdf(x,beta,m,loc=loc,scale=scale) + A*np.exp(-B*x))*binwidth
+def CrystalBallFitBg(x,beta,m,loc,scale,N,F,Z,A,B,binwidth):
+    return (N*crystalball.pdf(x,beta,m,loc=loc,scale=scale) + F*crystalball.pdf(x,beta,m,loc=loc,scale=Z*scale) + A*np.exp(B*x))*binwidth
 
-def CrystalBallFitNoBg(x,beta,m,loc,scale,N,A=0,B=0,binwidth=0):
-    return CrystalBallFitBg(x,beta,m,loc,scale,N,A=0,B=0,binwidth=binwidth)
+def CrystalBallFitNoBg(x,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=0):
+    return CrystalBallFitBg(x,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=binwidth)
 
 def GetBranches(loc):
     DATADIR="/storage/epp2/phshgg/Public/MPhysProject_2025_2026/tuples/0/"
     with uproot.open(f"{DATADIR}/DecayTree__U1S__{loc}__d13600GeV_24c4.root:DecayTree") as t:
         Rawdata = t.arrays(["mup_pt","mup_eta","mup_phi","mum_pt","mum_eta","mum_phi"],library="np")
+    Rawdata = Selection(Rawdata)
     data = ConvertCoords(Rawdata) #root file is in eta,phi but we want px,py,pz
     return data 
+
+def Selection(data):
+    print("Candidates before selection: ",len(data['mup_pt']))
+    masks = {
+        'mup_eta_low': (data['mup_eta'] > 2.2),
+        'mup_eta_high': (data['mup_eta'] < 4.4),
+        'mum_eta_low': (data['mum_eta'] > 2.2),
+        'mum_eta_high': (data['mum_eta'] < 4.4),
+        'mup_PT': (data['mup_pt'] > 5),
+        'mum_PT': (data['mum_pt'] > 5),
+    }
+    mask_tot = data["mup_pt"] > 0
+    for mask in masks:
+        mask_tot = mask_tot & masks[mask]
+    for quant in data:
+        data[quant] = data[quant][mask_tot]
+    print("Candidatates after selection: ",len(data['mup_pt']))
+    return data
 
 def UsefulValues(data,calibration_factor=1,smear=None):
     MUON_MASS = 0.1057
     mup_P,mum_P = np.array([data["mup_PX"],data["mup_PY"],data["mup_PZ"]]),np.array([data["mum_PX"],data["mum_PY"],data["mum_PZ"]])
     if smear:
-        rng = np.random.default_rng(seed=10)
-        Norm_rand = rng.normal(0,1,size=len(data["mup_PX"]))
-        mup_P = 1/(calibration_factor*(1/mup_P)+Norm_rand*smear)
-        mum_P = -1/(calibration_factor*(-1/mum_P)+Norm_rand*smear)
+        rng_p = np.random.default_rng(seed=10)
+        rng_m = np.random.default_rng(seed=11)
+        Norm_rand_p = rng_p.normal(0,1,size=len(data["mup_PX"]))
+        Norm_rand_m = rng_m.normal(0,1,size=len(data["mup_PX"]))
+        mup_P = mup_P*calibration_factor*(1-mup_P*Norm_rand_p*smear)
+        mum_P = mum_P*calibration_factor*(1-mum_P*Norm_rand_m*smear)
     else:
         mup_P = mup_P*calibration_factor
         mum_P = mum_P*calibration_factor
@@ -71,7 +86,7 @@ def Reconstruct(mup_P,mum_P,mup_E,mum_E):
 #loc and smear are just variables to determine the file name the graph will be saved under
 def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     #xmassHist, xbins, x = plt.hist(mass,bins=100,range=(9.2,9.75),histtype='step')
-    massHist,bins = np.histogram(mass,bins=100,range=(9.200,9.750))
+    massHist,bins = np.histogram(mass,bins=100,range=(9.15,9.750))
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -82,32 +97,31 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     plt.errorbar(bincenters,massHist,yerr=np.sqrt(massHist),fmt='none',ecolor='black',elinewidth=1,capsize=2)
     
     #Crystal Ball fit:
-    p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,N_tot,0.5*N_tot,9.9e-5]
-    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, -1e-10, -1e-10], [5.0, 10.0, 9.50, 0.10,  1.01*N_tot, 10*N_tot, 1.0])
+    p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,N_tot,N_tot/2,0.5,0.5*N_tot,0.3]
+    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0, -1e-2, -1e-10], [5.0, 10.0, 9.50, 0.10,  1.01*N_tot, 1.01*N_tot, 1e3, 10*N_tot, 100.0])
     if sim:
         fitfunc = CrystalBallFitNoBg
         #p0[5] = 0.0
         #p0[6] = 0.0
-        #p0 = [1.595,1.8727,9.458,0.03,0.99*N_tot,0.0,0.0]
-        p0 = [1.7,1.8727,9.458,0.03,0.99*N_tot,0.0,0.0]
-        p0 = [1.35259258,3.40023716,9.45816238,4.00892327e-02,4.91203393e+05,0.0,0.0]
+        p0 = [1.35259258,3.40023716,9.45816238,4.00892327e-02,0.8*N_tot,0.5*N_tot,0.1,0.0,0.0]
+        # p0 = [1.17968836, 2.84337456, 9.45874253, 4.69999659e-02, 3.75594873e+05, 3.52255401e+05, 0.75, 0.0, 0.0]
+        # p0 = [1.87514072,5.77014894,9.45767286,3.67106879e-02,3.96585919e+05,1.56756017e+05,1.5,0.0,0.0]
         if test:
             p0 = test_p0
         #print("CALCULATING SIM")
     else:
         fitfunc = CrystalBallFitBg
-    fitParam, cov = curve_fit(lambda x, beta, m, loc, scale, Ns, A, B: fitfunc(x, beta, m, loc, scale, Ns, A, B, binwidth), bincenters, massHist, p0=p0, bounds=bounds, maxfev=100000)
+    fitParam, cov = curve_fit(lambda x, beta, m, loc, scale, Ns, F, Z, A, B: fitfunc(x, beta, m, loc, scale, Ns, F, Z, A, B, binwidth), bincenters, massHist, p0=p0, bounds=bounds, maxfev=100000)
     err = np.sqrt(np.diag(cov))
-    #print(fitParam,"\n",err)
+    print(fitParam,"\n",err)
     # model = CrystalBallFitNoBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],binwidth)
     # plt.plot(bincenters,model,label="Crystall Ball function")
-    beta,m,loc,scale,N,A,B = fitParam
-    plt.plot(bincenters, (N*crystalball.pdf(bincenters,beta,m,loc=loc,scale=scale))*binwidth,label="Crystall Ball function",color="red")
+    beta,m,loc,scale,N,F,Z,A,B = fitParam
+    plt.plot(bincenters,CrystalBallFitNoBg(bincenters,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=binwidth),label="Crystal Ball Functions", color="red")
     if not sim:
-        plt.plot(bincenters,fitParam[5]*np.exp(-fitParam[6]*bincenters)*binwidth,label="background",color="blue")
-        combined_model = CrystalBallFitBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5],fitParam[6],binwidth)
+        plt.plot(bincenters,fitParam[7]*np.exp(fitParam[8]*bincenters)*binwidth,label="background",color="blue")
+        combined_model = CrystalBallFitBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5],fitParam[6],fitParam[7],fitParam[8],binwidth)
         plt.plot(bincenters,combined_model,label="combined",color="purple")
-    #A more accurate fit could be a double tailed crystal ball
     
     #print(f'Saving plot to transient/Upsilon_mass_{filename}.pdf')
 
@@ -124,18 +138,35 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
 
     if Output:
         #At the moment these are the only values I use but can add others (e.g. for A and B for background) easily here
+        eff_width, eff_width_err = CalcEffectiveWidth(N,scale,F,Z,err[4],err[3],err[5],err[6])
+        print(f'Sim {sim}: sigma: {scale}, Z: {Z}')
         outputvalues = {
             "mass": (fitParam[2],err[2]),
-            "width": (fitParam[3],err[3]),
-            "A": (fitParam[5],err[5]),
-            "B": (fitParam[6],err[6])
+            "width": (eff_width,eff_width_err),
+            "A": (fitParam[7],err[7]),
+            "B": (fitParam[8],err[8])
         }
         return (outputvalues)
     else:
         return 0
 
+def EffectiveWidth(N,scale,F,Z):
+    f_1 = N/(N+F)
+    f_2 = F/(N+F)
+    return np.sqrt((f_1*scale)**2 + (f_2*scale)**2)
+    #return scale
+
+def CalcEffectiveWidth(N,scale,F,Z,N_err,scale_err,F_err,Z_err):
+    eff_width = EffectiveWidth(N,scale,F,Z)
+    width_err_N = EffectiveWidth(N+N_err,scale,F,Z) - eff_width
+    width_err_scale = EffectiveWidth(N,scale+scale_err,F,Z) - eff_width
+    width_err_F = EffectiveWidth(N,scale,F+F_err,Z) - eff_width
+    width_err_Z = EffectiveWidth(N,scale,F,Z+Z_err) - eff_width
+    width_err_tot = np.sqrt(width_err_N**2 + width_err_scale**2+ width_err_F**2 + width_err_Z**2)
+    return (eff_width,width_err_tot)
+
 def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
-    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.2,9.75))
+    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.15,9.75))
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -146,10 +177,10 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     #background = np.min(data_massHist)
 
     fitParam = PlotHistogram(data_mass,'DATA_fit',Output=True)
-    background = fitParam["A"][0]*np.exp(-1*float(fitParam["B"][0])*bincenters)*binwidth
+    background = fitParam["A"][0]*np.exp(1*float(fitParam["B"][0])*bincenters)*binwidth
 
-    unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.2,9.75)))
-    scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.2,9.75)))
+    unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.15,9.75)))
+    scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.15,9.75)))
 
     data_massHist_noBG = data_massHist - background
     data_massHist_noBG[data_massHist_noBG < 0.0] = 0.0
@@ -192,9 +223,7 @@ def Comparing(sim_branches,data_branches):
     mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches)
     unscaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
 
-    rng = np.random.default_rng(seed=10)
-    Norm_rand = rng.normal(0,1,size=len(mum_E))
-    calibration_factor = 1+alpha
+    calibration_factor = 1+alpha    
     mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches,calibration_factor=calibration_factor,smear=Smear_factor)
     scaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass)
@@ -231,28 +260,8 @@ def CalcC(alpha_s,alpha_d):
     err_tot = np.sqrt(err_s**2+err_d**2)
     return (c,err_tot)
 
-def width_chi2(sigma,width_data,width_data_err,mup_P_orig,mum_P_orig,mup_E,mum_E):
-    #Outdated: need to recalculate the mup_E and mum_E with smearing
-    rng = np.random.default_rng(seed=10)
-    Norm_rand = rng.normal(0,1,size=len(mum_E))
-    factor = 1+Norm_rand*sigma
-    mup_P = mup_P_orig*factor
-    mum_P = mum_P_orig*factor
-    mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    width_sim = PlotHistogram(mass,"U1S",Output=True,sim=True)["width"]
-    return (width_sim[0] - width_data)**2 / width_data_err**2
-
-def CalcSmearFactorByMinimise():
-    #Currently unused and outdated
-    mup_P,mum_P,mup_E,mum_E = GetBranches("DATA")
-    mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    data_width = PlotHistogram(mass,"DATA",Output=True)["width"]
-    mup_P,mum_P,mup_E,mum_E = GetBranches("U1S")
-    best_sigma = minimize_scalar(width_chi2,args=(data_width[0],data_width[1],mup_P,mum_P,mup_E,mum_E),bounds=(0.0,0.1),method="bounded")
-    return best_sigma.x
-
 def SmearFactor(sim_width,sim_mass,data_width,data_mass,p_scale=1):
-    return (1/p_scale)*np.sqrt((data_width/data_mass)**2-(sim_width/sim_mass)**2)
+    return (1/p_scale)*np.sqrt(abs((data_width/data_mass)**2-(sim_width/sim_mass)**2))
 
 def CalcSmearFactor(sim_branches,data_branches,model='Naive'):
     mup_P_sim, mum_P_sim, mup_E_sim, mum_E_sim = UsefulValues(sim_branches)
@@ -262,7 +271,9 @@ def CalcSmearFactor(sim_branches,data_branches,model='Naive'):
     data_mass = Reconstruct(mup_P_dat,mum_P_dat,mup_E_dat,mum_E_dat)
     data_results = PlotHistogram(data_mass,"DATA",Output=True)
     if model !='Naive':
-        p_scale = np.mean([mup_P_sim,mum_P_sim])#,mup_P_dat,mum_P_dat])
+        mup_P_mag = np.sqrt(mup_P_sim[0]**2+mup_P_sim[1]**2+mup_P_sim[2]**2)
+        mum_P_mag = np.sqrt(mum_P_sim[0]**2+mum_P_sim[1]**2+mum_P_sim[2]**2)
+        p_scale = np.mean([mup_P_mag,mum_P_mag])#,mup_P_dat,mum_P_dat])
     else:
         p_scale = 1
     
@@ -273,7 +284,8 @@ def CalcSmearFactor(sim_branches,data_branches,model='Naive'):
     err_due_data_width = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0]+data_results["width"][1],data_results["mass"][0],p_scale) - sigma
     err_due_data_mass = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0]+data_results["mass"][1],p_scale) - sigma
     err_sigma = np.sqrt(err_due_sim_width**2+err_due_sim_mass**2+err_due_data_width**2+err_due_data_mass**2)
-    #sigma = sigma*p_scale #GET RID OF ME
+    # sigma = sigma*p_scale #GET RID OF ME
+    # err_sigma = err_sigma*p_scale
     return (sigma,err_sigma)
 
 
@@ -335,16 +347,6 @@ def main():
         output["C_ratio"] = (c,c_err)
         filename= filename+"_Scaled"
     
-    ##I don't think this is needed but without it, code does nothing by default (needs fixing)
-    ##Also if this is readded, it needs updating (uses outdated structure)
-    # mup_P,mum_P,mup_E,mum_E = GetBranches(loc,calibration_factor=factor)
-    # mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    # PlotHistogram(mass,filename)
-    # if (args.FullOutput).lower() == "true":
-    #     mup_P,mum_P,mup_E,mum_E = GetBranches("DATA",calibration_factor=factor)
-    #     mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
-    #     PlotHistogram(mass,"DATA_Smeared_Scaled")
-
     with open("Calibration_output.json","w") as OutputFile:
             dump(output,OutputFile,indent=2)
 
