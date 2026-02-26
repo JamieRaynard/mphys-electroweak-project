@@ -379,9 +379,9 @@ if fname == f"mass-width_values_and_error.txt":
     neg_mask= magnet_pol < 0
     pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
     neg_datam= {k: v[neg_mask] for k, v in datam.items()}
-    magnet="pos-magnet" 
+    magnet="pos_dipole" 
     sim_fits(tmass,simdatam,pos_datam,calibration_factor,magnet,50)
-    magnet="neg-magnet" 
+    magnet="neg_dipole" 
     sim_fits(tmass,simdatam,neg_datam,calibration_factor,magnet,50)
 # can add  more here qutie easily 
 # this is splitting up agnles azimuthal of positive muon in detector

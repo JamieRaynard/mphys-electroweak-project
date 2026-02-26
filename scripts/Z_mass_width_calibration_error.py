@@ -156,7 +156,7 @@ chi2p=mass_width[4]
 ndfp=mass_width[5]
 corelationp=np.sqrt((mass_width[6])**2)
 
-fname10 = "../mphys-electroweak-project/-π__0"
+fname10 = "../mphys-electroweak-project/-0__π"
 mass_width = np.loadtxt(fname10, dtype=float)
 massn=mass_width[0]
 widthn=mass_width[1]
@@ -196,7 +196,7 @@ with open("Angle_table.tex", "w") as f:
     f.write(r"\caption{Reults for angles between 0 and $\pi$ and -$\pi$ to 0}" + "\n")
     f.write(r"\end{table}" + "\n")
 
-fname11 = "../mphys-electroweak-project/lower_half_P"
+fname11 = "../mphys-electroweak-project/Lower_Pt"
 mass_width = np.loadtxt(fname11, dtype=float)
 massp=mass_width[0]
 widthp=mass_width[1]
@@ -206,7 +206,7 @@ chi2p=mass_width[4]
 ndfp=mass_width[5]
 corelationp=np.sqrt((mass_width[6])**2)
 
-fname12 = "../mphys-electroweak-project/upper_half_P"
+fname12 = "../mphys-electroweak-project/Higher_Pt"
 mass_width = np.loadtxt(fname12, dtype=float)
 massn=mass_width[0]
 widthn=mass_width[1]
@@ -246,7 +246,7 @@ with open("Dimuon-transverse-P.tex", "w") as f:
     f.write(r"\caption{Reults for Dimuon transverse moemntum splitting up data at 18.3 Gev}" + "\n")
     f.write(r"\end{table}" + "\n")
 
-fname13 = "../mphys-electroweak-project/Bins_30"
+fname13 = "../mphys-electroweak-project/30-bins"
 mass_width = np.loadtxt(fname12, dtype=float)
 massp=mass_width[0]
 widthp=mass_width[1]
@@ -257,7 +257,7 @@ ndfp=mass_width[5]
 corelationp=np.sqrt((mass_width[6])**2)
 
 
-fname12 = "../mphys-electroweak-project/Bins_80"
+fname12 = "../mphys-electroweak-project/90-bins"
 mass_width = np.loadtxt(fname12, dtype=float)
 massn=mass_width[0]
 widthn=mass_width[1]
