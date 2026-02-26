@@ -245,3 +245,88 @@ with open("Dimuon-transverse-P.tex", "w") as f:
     f.write(r"\end{tabular}" + "\n")
     f.write(r"\caption{Reults for Dimuon transverse moemntum splitting up data at 18.3 Gev}" + "\n")
     f.write(r"\end{table}" + "\n")
+
+fname13 = "../mphys-electroweak-project/Bins_30"
+mass_width = np.loadtxt(fname12, dtype=float)
+massp=mass_width[0]
+widthp=mass_width[1]
+mass_errorp=mass_width[2]
+width_errorp=mass_width[3]
+chi2p=mass_width[4]
+ndfp=mass_width[5]
+corelationp=np.sqrt((mass_width[6])**2)
+
+
+fname12 = "../mphys-electroweak-project/Bins_80"
+mass_width = np.loadtxt(fname12, dtype=float)
+massn=mass_width[0]
+widthn=mass_width[1]
+mass_errorn=mass_width[2]
+width_errorn=mass_width[3]
+chi2n=mass_width[4]
+ndfn=mass_width[5]
+corelationn=np.sqrt((mass_width[6])**2)
+with open("Bins_table.tex", "w") as f:
+    f.write(r"\begin{table}[H]" + "\n")
+    f.write(r"\centering" + "\n")
+    f.write(r"\begin{tabular}{l c c}" + "\n")
+    f.write(r"\hline" + "\n")
+    f.write(r" & Mass & Width \\" + "\n")
+    f.write(r"\hline" + "\n")
+    f.write(f"30 bins & {massp:.5f} $\pm$ {mass_errorp:.5f} & {widthp:.5f} $\pm$ {width_errorp:.5f} \\\\\n")
+    f.write(f"50 bins & {mass:.5f} $\pm$ {mass_error:.5f} & {width:.5f} $\pm$ {width_error:.5f} \\\\\n")
+    f.write(f"80 bins & {massn:.5f} $\pm$ {mass_errorn:.5f} & {widthn:.5f} $\pm$ {width_errorn:.5f} \\\\\n")
+    f.write(r"\hline" + "\n")
+    f.write(r"\end{tabular}" + "\n")
+    f.write(r"\caption{Z mass and width with statistical error for each bin size}" + "\n")
+    f.write(r"\end{table}" + "\n")
+
+
+fname13 = "../mphys-electroweak-project/seperate_Pt_selection"
+mass_width = np.loadtxt(fname13, dtype=float)
+mass1=mass_width[0]
+width1=mass_width[1]
+mass_error1=mass_width[2]
+width_error1=mass_width[3]
+chi21=mass_width[4]
+ndf1=mass_width[5]
+corelation1=np.sqrt((mass_width[6])**2)
+
+fname14 = "../mphys-electroweak-project/psuedo"
+mass_width = np.loadtxt(fname14, dtype=float)
+mass2=mass_width[0]
+width2=mass_width[1]
+mass_error2=mass_width[2]
+width_error2=mass_width[3]
+chi22=mass_width[4]
+ndf2=mass_width[5]
+corelation2=np.sqrt((mass_width[6])**2)
+
+fname15 = "../mphys-electroweak-project/seperate_Pt_psuedo_selection"
+mass_width = np.loadtxt(fname15, dtype=float)
+mass3=mass_width[0]
+width3=mass_width[1]
+mass_error3=mass_width[2]
+width_error3=mass_width[3]
+chi23=mass_width[4]
+ndf3=mass_width[5]
+corelation3=np.sqrt((mass_width[6])**2)
+
+
+
+with open("selection_table.tex", "w") as f:
+    f.write(r"\begin{table}[H]" + "\n")
+    f.write(r"\centering" + "\n")
+    f.write(r"\begin{tabular}{l c c c}" + "\n")  # 4 columns now
+    f.write(r"\hline" + "\n")
+    f.write(r" & Transverse momentum & pseudorapidity & Both applied simultaneously \\" + "\n")
+    f.write(r"\hline" + "\n")
+    f.write(f"mass & {mass1:.5f} $\pm$ {mass_error1:.5f} & {mass2:.5f} $\pm$ {mass_error2:.5f} & {mass3:.5f} $\pm$ {mass_error3:.5f} \\\\\n")
+    f.write(f"width & {width1:.5f} $\pm$ {width_error1:.5f} & {width2:.5f} $\pm$ {width_error2:.5f} & {width3:.5f} $\pm$ {width_error3:.5f} \\\\\n")
+    f.write(f"$\chi^2$ & {chi21:.3f}  & {chi22:.3f} & {chi23:.3f} \\\\\n")
+    f.write(f"$\chi^2$ & {ndf1:.3f}  & {ndf2:.3f} & {ndf3:.3f} \\\\\n")
+    f.write(f"corelation & {corelation1:.3f}  & {corelation2:.3f} & {corelation3:.3f} \\\\\n")
+    f.write(r"\hline" + "\n")
+    f.write(r"\end{tabular}" + "\n")
+    f.write(r"\caption{Transver momentum selection of $>$ 20 Gev per in both muons and pseudorapidity selection 2.2$<\eta <$4.4}" + "\n")
+    f.write(r"\end{table}" + "\n")
