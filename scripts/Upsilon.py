@@ -8,16 +8,10 @@ import argparse
 from scipy.stats import crystalball
 from json import dump,load
 
-#This is the Gaussian fit that I tried before the Crytall Ball, it is better at capturing the right tail
-def ResFit(x,total,mean,sd,A,B):
-    term = -0.5*((x-mean)**2 / sd**2)
-    return A*np.exp(-B*x) + total / (np.sqrt(2*np.pi)*sd) * np.exp(term) #+D
-
-#This Crystal Ball Fuction better encapsulates the QED radiative tail on the left side of the curve
 #from scipy.stats documentation crystallball(x,beta,m): x = (x-mean)/sd
 #Needed the loc and scale to act analogous to the mean and sd in a Gaussian
 def CrystalBallFitBg(x,beta,m,loc,scale,N,F,Z,A,B,binwidth):
-    return (N*crystalball.pdf(x,beta,m,loc=loc,scale=scale) + F*crystalball.pdf(x,beta,m,loc=loc,scale=Z*scale) + A*np.exp(-B*x))*binwidth
+    return (N*crystalball.pdf(x,beta,m,loc=loc,scale=scale) + F*crystalball.pdf(x,beta,m,loc=loc,scale=Z*scale) + A*np.exp(B*x))*binwidth
 
 def CrystalBallFitNoBg(x,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=0):
     return CrystalBallFitBg(x,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=binwidth)
@@ -104,7 +98,7 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     
     #Crystal Ball fit:
     p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,N_tot,N_tot/2,0.5,0.5*N_tot,0.3]
-    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0, -1e-10, -1e-10], [5.0, 10.0, 9.50, 0.10,  1.01*N_tot, 1.01*N_tot, 1e3, 10*N_tot, 100.0])
+    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0, -1e-2, -1e-10], [5.0, 10.0, 9.50, 0.10,  1.01*N_tot, 1.01*N_tot, 1e3, 10*N_tot, 100.0])
     if sim:
         fitfunc = CrystalBallFitNoBg
         #p0[5] = 0.0
@@ -125,7 +119,7 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     beta,m,loc,scale,N,F,Z,A,B = fitParam
     plt.plot(bincenters,CrystalBallFitNoBg(bincenters,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=binwidth),label="Crystal Ball Functions", color="red")
     if not sim:
-        plt.plot(bincenters,fitParam[7]*np.exp(-fitParam[8]*bincenters)*binwidth,label="background",color="blue")
+        plt.plot(bincenters,fitParam[7]*np.exp(fitParam[8]*bincenters)*binwidth,label="background",color="blue")
         combined_model = CrystalBallFitBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5],fitParam[6],fitParam[7],fitParam[8],binwidth)
         plt.plot(bincenters,combined_model,label="combined",color="purple")
     
@@ -157,8 +151,10 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
         return 0
 
 def EffectiveWidth(N,scale,F,Z):
-    #return np.sqrt((N*scale**2 + F*(Z*scale)**2)/(N+F))
-    return scale
+    f_1 = N/(N+F)
+    f_2 = F/(N+F)
+    return np.sqrt((f_1*scale)**2 + (f_2*scale)**2)
+    #return scale
 
 def CalcEffectiveWidth(N,scale,F,Z,N_err,scale_err,F_err,Z_err):
     eff_width = EffectiveWidth(N,scale,F,Z)
@@ -181,7 +177,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     #background = np.min(data_massHist)
 
     fitParam = PlotHistogram(data_mass,'DATA_fit',Output=True)
-    background = fitParam["A"][0]*np.exp(-1*float(fitParam["B"][0])*bincenters)*binwidth
+    background = fitParam["A"][0]*np.exp(1*float(fitParam["B"][0])*bincenters)*binwidth
 
     unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.15,9.75)))
     scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.15,9.75)))
