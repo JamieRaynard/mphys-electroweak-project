@@ -37,8 +37,6 @@ with uproot.open(f"{DATAIR}/DecayTree__Z__DATA__d13600GeV_24c4.root:DecayTree") 
 
     #momentasim = t.arrays(["mup_PX","mup_PY","mup_PZ","mum_PX" ,"mum_PY" ,"mum_PZ"],library="np")
     datam=tt.arrays(["mum_eta","mum_phi","mum_pt","mup_eta" ,"mup_phi" ,"mup_pt"],library="np")
-    for key in tt:
-        print(key)
 
 if (args.Calibration).lower() == "true":
     try:
@@ -62,19 +60,17 @@ if (args.Calibration).lower() == "true":
             C_rat=C_rat-C_err
             fname = f"C_rat_minus.txt"
         
-        rng = np.random.default_rng(seed=10)
-        Norm_rand = rng.normal(0,1,size=len(tmass))
-        alpha = 1 - C_rat
-        calibration_factor = 1+alpha+Norm_rand*Smear_factor
+        calibration_factor = (C_rat,Smear_factor)
 
         print(f'Woo the correction is now  {calibration_factor}')
 
     except FileNotFoundError:
         print("Please run the script Upsilon.py first to get a calibration value")
         #This is where I would return to stop the script if we were inside a main func to avoid error
-        calibration_factor=1
+        calibration_factor=None
+
 else:
-    calibration_factor = 1
+    calibration_factor = None
     fname = f"useless.txt"
 
 
@@ -87,12 +83,29 @@ def conaeq(reconmass,cal):
     mmpt=reconmass["mum_pt"] 
     mmphi=reconmass["mum_phi"]
     # calibration being applied here
-    mpx=mppt*np.cos(mpphi)*cal
-    mmx=mmpt*np.cos(mmphi)*cal
-    mpy=mppt*np.sin(mpphi)*cal
-    mmy=mmpt*np.sin(mmphi)*cal
-    mpz=mppt*np.sinh(mpe)*cal
-    mmz=mmpt*np.sinh(mme)*cal
+    mpx=mppt*np.cos(mpphi)
+    mmx=mmpt*np.cos(mmphi)
+    mpy=mppt*np.sin(mpphi)
+    mmy=mmpt*np.sin(mmphi)
+    mpz=mppt*np.sinh(mpe)
+    mmz=mmpt*np.sinh(mme)
+
+    mup_P = np.array([mpx,mpy,mpz])
+    mum_P = np.array([mmx,mmy,mmz])
+
+    if cal:
+        #x = cal[1]/(np.mean([mup_P,mum_P]))
+        #cal[1] = x
+        #mup_P = 1/(cal[0]*(1/mup_P)+cal[1])
+        #mum_P = -1/(cal[0]*(-1/mum_P)+cal[1])
+        rng_p = np.random.default_rng(seed=10)
+        rng_m = np.random.default_rng(seed=11)
+        Norm_rand_p = rng_p.normal(0,1,size=len(mpx))
+        Norm_rand_m = rng_m.normal(0,1,size=len(mpx))
+        mup_P = mup_P*cal[0]*(1+mup_P*Norm_rand_p*cal[1])
+        mum_P = mum_P*cal[0]*(1+mum_P*Norm_rand_m*cal[1])
+        mpx,mpy,mpz = mup_P
+        mmx,mmy,mmz = mum_P
 
     m=[]
     Ep=[]
@@ -113,7 +126,7 @@ def fiteq(x,a,b,m,w,scale):
 def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     c=calibration_factor #error in calibration
     bin_space=np.linspace(80.0,100.0,bin_number)
-    dataHist,databinn,_d=plt.hist(conaeq(datam,1), bins=bin_space, histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
+    dataHist,databinn,_d=plt.hist(conaeq(datam,None), bins=bin_space, histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
     trmassHist,binn,_t=plt.hist(tmass, bins=bin_space, histtype="step",label="Z-true",density=True,linewidth=1) #for true mass
     centers=0.5*(binn[1:]+binn[:-1])
     w=3
