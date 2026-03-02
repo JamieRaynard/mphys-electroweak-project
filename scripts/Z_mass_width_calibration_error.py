@@ -257,7 +257,7 @@ ndfp=mass_width[5]
 corelationp=np.sqrt((mass_width[6])**2)
 
 
-fname12 = "../mphys-electroweak-project/90-bins"
+fname12 = "../mphys-electroweak-project/80-bins"s
 mass_width = np.loadtxt(fname12, dtype=float)
 massn=mass_width[0]
 widthn=mass_width[1]
