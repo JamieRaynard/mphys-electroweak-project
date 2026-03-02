@@ -36,7 +36,7 @@ with uproot.open(f"{DATAIR}/DecayTree__Z__Z__d13600GeV_24c4.root:DecayTree") as 
 with uproot.open(f"{DATAIR}/DecayTree__Z__DATA__d13600GeV_24c4.root:DecayTree") as tt:
 
     #momentasim = t.arrays(["mup_PX","mup_PY","mup_PZ","mum_PX" ,"mum_PY" ,"mum_PZ"],library="np")
-    datam=tt.arrays(["mum_eta","mum_phi","mum_pt","mup_eta" ,"mup_phi" ,"mup_pt"],library="np")
+    datam=tt.arrays(["mum_eta","mum_phi","mum_pt","mup_eta" ,"mup_phi" ,"mup_pt","yearpol","V_PT"],library="np")
 
 if (args.Calibration).lower() == "true":
     try:
@@ -135,8 +135,8 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
 
     # i want 9 differnet parameters
 
-    ratio905_1=fiteq(tmass,fitParam[0],fitParam[1],90.5,1,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
-    simmassHistweights905_1,binnweights905_1 = np.histogram(conaeq(simdatam,c), bins=bin_space, weights=ratio905_1)
+    ratio905_1=fiteq(tmass,fitParam[0],fitParam[1],90.5,1,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])#ratio--
+    simmassHistweights905_1,binnweights905_1 = np.histogram(conaeq(simdatam,c), bins=bin_space, weights=ratio905_1)#----------------------------widghted sim ie tempalte
     ratio905_2=fiteq(tmass,fitParam[0],fitParam[1],90.5,2,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
     simmassHistweights905_2,binnweights905_2 = np.histogram(conaeq(simdatam,c), bins=bin_space, weights=ratio905_2)
     ratio905_3=fiteq(tmass,fitParam[0],fitParam[1],90.5,3,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
@@ -221,11 +221,11 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
 
     def interpolate_chi_func(mass_value,width_value):
         interpolate_template=griddata(coords,templates,(mass_value,width_value),method='linear')
-        return np.sum(((dataHist-interpolate_template)**2)/interpolate_template) 
+        return np.sum(((dataHist-interpolate_template)**2)/interpolate_template) #------------------------ch^2 function
     
 #///////////////////////////////////////////////////////////////////////////////// calulcations for min mass and width
         # the Minuit doesnt seem to work without passign a fucntion through it 
-    m = Minuit(interpolate_chi_func, 90.6, 2.4)
+    m = Minuit(interpolate_chi_func, 90.6, 2.4)#--------------------------------------minimise
     m.migrad()
     m.hesse()
     mass_result=m.values["mass_value"]
@@ -289,23 +289,68 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     
     #top
    # ax1.scatter(centers,dataHist ,label='data ',color="black",s=10)
+    #c1,c2 variables to be changed in order to make graph convey right effect-ajust the tempaltes
+    c1=mass_result+0.3 
+    c2=width_result
+    ratio_a=fiteq(tmass,fitParam[0],fitParam[1],c1,c2,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    simmassHistweights_a,binnweights915_3 = np.histogram(conaeq(simdatam,c), bins=bin_space, weights=ratio_a)
+
+    sim_scale_factor_a= np.sum(dataHist) / np.sum(simmassHistweights_a)
+    simHist_scaled_a = simmassHistweights_a * sim_scale_factor_a
+
+    c1=mass_result-0.3 
+    c2=width_result
+    ratio_b=fiteq(tmass,fitParam[0],fitParam[1],c1,c2,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    simmassHistweights_b,binnweights915_3 = np.histogram(conaeq(simdatam,c), bins=bin_space, weights=ratio_b)
+
+    sim_scale_factor_b= np.sum(dataHist) / np.sum(simmassHistweights_b)
+    simHist_scaled_b = simmassHistweights_b * sim_scale_factor_b
+
+    c1=mass_result
+    c2=width_result+0.5
+    ratio_c=fiteq(tmass,fitParam[0],fitParam[1],c1,c2,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    simmassHistweights_c,binnweights915_3 = np.histogram(conaeq(simdatam,c), bins=bin_space, weights=ratio_c)
+
+    sim_scale_factor_c= np.sum(dataHist) / np.sum(simmassHistweights_c)
+    simHist_scaled_c = simmassHistweights_c * sim_scale_factor_c
+
+    c1=mass_result
+    c2=width_result-0.5
+    ratio_d=fiteq(tmass,fitParam[0],fitParam[1],c1,c2,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    simmassHistweights_d,binnweights915_3 = np.histogram(conaeq(simdatam,c), bins=bin_space, weights=ratio_d)
+
+    sim_scale_factor_d= np.sum(dataHist) / np.sum(simmassHistweights_d)
+    simHist_scaled_d = simmassHistweights_d * sim_scale_factor_d
+
+
+
+    best_interpolate_template=griddata(coords,templates,(mass_result,width_result),method='linear')#-----------------------best fit
+
     ax1.errorbar(centers, dataHist, yerr=dataerrors,label='Data ',color="black",fmt=".",markersize=2.5 )
-    ax1.step(centers, simHist_scaled91_2, '-', linewidth=2,where='mid', label='91 Gev mass 2 Gev width template')
+    ax1.step(centers, best_interpolate_template, '-', linewidth=2,where='mid', label='best fit interprolate tempalte')
     ax1.set_ylabel("Frequency")
     ax1.legend(loc='upper left',frameon=True, fontsize=8)
     ax1.set_ylim(bottom=0)
     # bottom
-    ratio_91_3_91_2=simHist_scaled91_3/simHist_scaled91_2
-    ratio_91_2_91_2=simHist_scaled91_2/simHist_scaled91_2
-    ratio_915_91_2=simHist_scaled915_2/simHist_scaled91_2
+    ratio_a=simHist_scaled_a/best_interpolate_template
+    
+    ratio_b=simHist_scaled_b/best_interpolate_template
 
-    ratio_data_91_2=dataHist/simHist_scaled91_2
+    ratio_fit=best_interpolate_template/best_interpolate_template
+
+    ratio_c=simHist_scaled_c /best_interpolate_template
+
+    ratio_d=simHist_scaled_d /best_interpolate_template
+
+    ratio_data_91_2=dataHist/best_interpolate_template
     ratioerror=ratio_data_91_2*dataerrors/dataHist
     #ax2.scatter(centers,ratio_data_91,label='data ',color="black",s=10)
-    ax2.errorbar(centers, ratio_data_91_2, yerr=ratioerror,label='Data/91_2 Gev template ',color="black",fmt=".",markersize=2.5 )
-    ax2.step(centers, ratio_91_3_91_2, '-', linewidth=2,where='mid', label='91_3/91_2 Gev template ratio')
-    ax2.step(centers, ratio_91_2_91_2, '-', linewidth=2,where='mid', label='91_2/91_2_2 Gev template ratio')
-    ax2.step(centers, ratio_915_91_2, '-', linewidth=2,where='mid', label='91.5_2/91_2 Gev template ratio')
+    ax2.errorbar(centers, ratio_data_91_2, yerr=ratioerror,label='Data/best fit ',color="black",fmt=".",markersize=2.5 )
+    ax2.step(centers, ratio_a, '-', linewidth=1,where='mid', label='mass+0.3 Gev/best fit',color="red")
+    ax2.step(centers, ratio_fit, '-', linewidth=1,where='mid', label='best fit /best fit')
+    ax2.step(centers, ratio_b, '-', linewidth=1,where='mid', label='mass-0.3 Gev/best fit  ',color="orange")
+    ax2.step(centers, ratio_c, '-', linewidth=1,where='mid', label='width+0.5 Gev/best fit',color="blue")
+    ax2.step(centers, ratio_d, '-', linewidth=1,where='mid', label='width-0.5 Gev Gev/best fit',color="lightblue")
     ax2.set_ylabel("Ratio")
     ax2.set_xlabel("Dimuon mass GeV")
     ax2.set_ylim(bottom=0.8)
@@ -333,12 +378,13 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     ax.set_ylabel("Width") 
     ax.set_title("Mass Width error Ellipse") 
     
-    ax.set_xlim(91.13, 91.19) 
-    ax.set_ylim(1.95,2.55)
+    ax.set_xlim(91.11, 91.22) 
+    ax.set_ylim(2,2.56)
+
     theory_corelation=0.29342  #Theory------------------------------
-    theory_mass=91.1875
-    theory_massE=0.0021
-    theory_width=2.4955
+    theory_mass=91.2047
+    theory_massE=0.0088
+    theory_width=2.49423
     theory_widthE=0.0023
     covariance_matrix = np.array([
     [theory_massE**2                             , theory_corelation*theory_massE*theory_widthE],  # 0.01 is the estiamte of the corelation coefficnet for theroretical cahnged to what a paper gave J blas electoweak fit
@@ -355,68 +401,99 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     ellipse2 = Ellipse( (theory_mass, theory_width), width=major_axis_length, height=minor_axis_length, angle=theta, edgecolor='blue', facecolor='none', linewidth=2)
     ax.add_patch(ellipse2)
     ax.scatter(theory_mass, theory_width, color='blue', label='standard model theory')
+    #LEP elipse--------------------------------------
+    theory_corelation= 0.038  
+    theory_mass=91.1875
+    theory_massE=0.0021
+    theory_width=2.4952
+    theory_widthE=0.0023
+    covariance_matrix = np.array([
+    [theory_massE**2                             , theory_corelation*theory_massE*theory_widthE],  # 0.01 is the estiamte of the corelation coefficnet for theroretical cahnged to what a paper gave J blas electoweak fit
+    [theory_corelation*theory_massE*theory_widthE, theory_widthE**2 ]                   ]) 
+    eigenvalues,eigenvectors  = np.linalg.eigh(covariance_matrix)
+    order = eigenvalues.argsort()[::-1] 
+    eigenvalues = eigenvalues[order]
+    eigenvectors=eigenvectors[:, order]  #making the bigegst eignecalue and coresponding vector be first in order
+    major_axis_vector = eigenvectors[:,0]
+    vx, vy = major_axis_vector[0], major_axis_vector[1]
+    theta = np.degrees(np.arctan2(vy, vx))
+    major_axis_length = 2 * np.sqrt(eigenvalues[0]) 
+    minor_axis_length = 2 * np.sqrt(eigenvalues[1])
+    ellipse3 = Ellipse( (theory_mass, theory_width), width=major_axis_length, height=minor_axis_length, angle=theta, edgecolor='green', facecolor='none', linewidth=2)
+    ax.add_patch(ellipse3)
+    ax.scatter(theory_mass, theory_width, color='green', label='LEP')
     ax.legend(loc="upper left") 
     plt.savefig(f"transient/Z-Error-Ellipse ({'real' if use_diagram==True else use_diagram}).pdf")
 
-sim_fits(tmass,simdatam,datam,calibration_factor,True,50)
+#selection cuts------------------------
+
+muon_pt_p=datam["mup_pt"]
+muon_pt_n=datam["mum_pt"]
+
+muon_eta_p=datam["mup_eta"]
+muon_eta_n=datam["mum_eta"]
+
+pos_mask= (muon_eta_p < 4.4) & (muon_eta_n < 4.4) & (muon_eta_p > 2.2) & (muon_eta_n > 2.2) & (muon_pt_n > 20) & (muon_pt_p > 20)
+pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
+seperate_Pt_psuedo_selection=True
+
+sim_fits(tmass,simdatam,pos_datam,calibration_factor,True,50) #-All DATA goes through the cuts
+
 
 
 if fname == f"mass-width_values_and_error.txt":
     fname="dont_use"
     # this is to test changing bin numbers------------------------------------------
-    sim_fits(tmass,simdatam,datam,calibration_factor,"30-bins",30)
-    sim_fits(tmass,simdatam,datam,calibration_factor,"90-bins",80)
+    sim_fits(tmass,simdatam,pos_datam,calibration_factor,"30-bins",30)
+    sim_fits(tmass,simdatam,pos_datam,calibration_factor,"80-bins",80)
 
 # this is to test for magnetic monople 
 #real means standard ie can use, watch out that adign the erros will chnage this so real is only trustworthy using general calibration and the run all script
 # make sure that calibration ="true" is used and nothign else or if using other arguenmtns make sure jsut calibration=ture is used last
-    with uproot.open(f"{DATAIR}/DecayTree__Z__DATA__d13600GeV_24c4.root:DecayTree") as tt:
-        magnet_pol=tt.arrays(["yearpol"],library="np")
-        Dimuon_P=tt.arrays(["V_PT"],library="np")
-    magnet_pol=np.array(magnet_pol["yearpol"])
-    print(f"magnet valeus are { magnet_pol}")
-    pos_mask= magnet_pol > 0
-    neg_mask= magnet_pol < 0
-    pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
-    neg_datam= {k: v[neg_mask] for k, v in datam.items()}
+    magnet_pol=pos_datam["yearpol"]
+    #print(f"magnet valeus are { magnet_pol}")
+    pos_mask2= magnet_pol > 0
+    neg_mask2= magnet_pol < 0
+    pos_datam2= {k: v[pos_mask2] for k  , v in pos_datam.items()}
+    neg_datam2= {k: v[neg_mask2] for k, v in pos_datam.items()}
     magnet="pos_dipole" 
-    sim_fits(tmass,simdatam,pos_datam,calibration_factor,magnet,50)
+    sim_fits(tmass,simdatam,pos_datam2,calibration_factor,magnet,50)
     magnet="neg_dipole" 
-    sim_fits(tmass,simdatam,neg_datam,calibration_factor,magnet,50)
+    sim_fits(tmass,simdatam,neg_datam2,calibration_factor,magnet,50)
 # can add  more here qutie easily 
 # this is splitting up agnles azimuthal of positive muon in detector
 
-    muP_thi=np.array(datam["mup_phi"])
-    pos_mask= muP_thi > 0
-    neg_mask= muP_thi < 0
-    pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
-    neg_datam= {k: v[neg_mask] for k, v in datam.items()}
-    angle="0__π" 
+    muP_thi=pos_datam["mup_phi"]
+    pos_mask2= muP_thi > 0
+    neg_mask2= muP_thi < 0
+    pos_datam2= {k: v[pos_mask2] for k  , v in pos_datam.items()}
+    neg_datam2= {k: v[neg_mask2] for k, v in pos_datam.items()}
 
-    sim_fits(tmass,simdatam,pos_datam,calibration_factor,angle,50)
+    angle="0__π" 
+    sim_fits(tmass,simdatam,pos_datam2,calibration_factor,angle,50)
     angle="-0__π" 
-    sim_fits(tmass,simdatam,neg_datam,calibration_factor,angle,50)
+    sim_fits(tmass,simdatam,neg_datam2,calibration_factor,angle,50)
 # splitting by transeverse muon momentum 
-    Dimuon_P=np.array(Dimuon_P["V_PT"])
-    print(np.mean(Dimuon_P))
-    pos_mask= Dimuon_P > 18.3
-    neg_mask=Dimuon_P <= 18.3
-    pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
-    neg_datam= {k: v[neg_mask] for k, v in datam.items()}
+    Dimuon_P=pos_datam["V_PT"]
+    #print(np.mean(Dimuon_P))
+    pos_mask2= Dimuon_P > 18.3
+    neg_mask2=Dimuon_P <= 18.3
+    pos_datam2= {k: v[pos_mask2] for k  , v in pos_datam.items()}
+    neg_datam2= {k: v[neg_mask2] for k, v in pos_datam.items()}
     dimuon="Higher_Pt"
-    sim_fits(tmass,simdatam,pos_datam,calibration_factor,dimuon,50)
+    sim_fits(tmass,simdatam,pos_datam2,calibration_factor,dimuon,50)
     dimuon="Lower_Pt"
-    sim_fits(tmass,simdatam,neg_datam,calibration_factor,dimuon,50)
+    sim_fits(tmass,simdatam,neg_datam2,calibration_factor,dimuon,50)
+
+
+
+# this splitting happens earlier anyway but is used as a check and to see what indilvidual selection cuts do
 # splitting by individual transverse momenta-----more of a selection cut then a comaprison
-    muon_pt_p=datam["mum_pt"]
-    muon_pt_n=datam["mup_pt"]
     pos_mask= (muon_pt_n > 20) & (muon_pt_p > 20)
     pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
     seperate_Pt_selection="seperate_Pt_selection"
     sim_fits(tmass,simdatam,pos_datam,calibration_factor,seperate_Pt_selection,50)
 #splitting by individual pseudorapidity
-    muon_eta_p=datam["mum_eta"]
-    muon_eta_n=datam["mup_eta"]
     pos_mask= (muon_eta_p < 4.4) & (muon_eta_n < 4.4) & (muon_eta_p > 2.2) & (muon_eta_n > 2.2)
     pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
     psuedo="psuedo"
