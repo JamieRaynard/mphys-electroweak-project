@@ -133,6 +133,16 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     m=91.1876
     fitParam,_tt = curve_fit(fiteq,centers,trmassHist,p0=[5,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,1]),maxfev=10000)# this uses the true mass
 
+    plt.figure()#-------------------------true mass function graph
+    trmassHist,binn,_t=plt.hist(tmass, bins=bin_space, histtype="step",label="Z-true",density=True,linewidth=1)
+    fitParam,_tt = curve_fit(fiteq,centers,trmassHist,p0=[5,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,1]),maxfev=10000)
+    x_fit = np.linspace(80, 100, 500)
+    y_fit=fiteq(x_fit,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
+    plt.plot(x_fit,y_fit)
+    plt.xlabel("Dimuon Mass GeV")
+    plt.ylabel("Events")
+    plt.savefig(f"transient/True_mass_fit ({'real' if use_diagram==True else use_diagram}).pdf")
+
     # i want 9 differnet parameters
 
     ratio905_1=fiteq(tmass,fitParam[0],fitParam[1],90.5,1,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])#ratio--
@@ -422,9 +432,28 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     ellipse3 = Ellipse( (theory_mass, theory_width), width=major_axis_length, height=minor_axis_length, angle=theta, edgecolor='green', facecolor='none', linewidth=2)
     ax.add_patch(ellipse3)
     ax.scatter(theory_mass, theory_width, color='green', label='LEP')
-    ax.legend(loc="upper left") 
-    plt.savefig(f"transient/Z-Error-Ellipse ({'real' if use_diagram==True else use_diagram}).pdf")
 
+    #---------------------------------------------other mesurments 
+    #lhcb
+    Z_mass_lhcb=91.1857
+    lhcb_E=0.0083
+    x_vals = np.linspace(*ax.get_xlim(), 500)
+    ax.axvline(x=Z_mass_lhcb,label="LHCb prior measurment",color='black')
+    ax.axvline(x=Z_mass_lhcb + lhcb_E, linestyle='--',color='black')
+    ax.axvline(x=Z_mass_lhcb - lhcb_E, linestyle='--',color='black')
+    #ax.fill_betweenx(y=ax.get_ylim(),x1=lhcb_E - lhcb_E,x2=lhcb_E + lhcb_E,alpha=0.3,color="grey")
+
+ 
+    #CDF
+    Z_mass_CDF=91.1943
+    CDF_E=0.0138
+    x_vals = np.linspace(*ax.get_xlim(), 500)
+    ax.axvline(x=Z_mass_CDF,label="CDF",color='orange')
+    ax.axvline(x=Z_mass_CDF + CDF_E, linestyle='--',color='orange')
+    ax.axvline(x=Z_mass_CDF - CDF_E, linestyle='--',color='orange')
+    ax.legend(loc="upper left")
+    plt.savefig(f"transient/Z-Error-Ellipse ({'real' if use_diagram==True else use_diagram}).pdf")
+    
 #selection cuts------------------------
 
 muon_pt_p=datam["mup_pt"]
