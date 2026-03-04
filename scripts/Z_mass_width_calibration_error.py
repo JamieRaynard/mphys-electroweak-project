@@ -117,8 +117,8 @@ corelationn=np.sqrt((mass_width[6])**2)
 differnce_mass = np.sqrt((massp-massn)**2)
 differnce_width = np.sqrt((widthp-widthn)**2)
 
-magnet_mass_significance=differnce_mass/(np.sqrt(mass_errorp**2 + mass_errorn**2))
-magnet_width_significance=differnce_width/(np.sqrt(width_errorp**2 + width_errorn**2))
+magnet_mass_significance1=differnce_mass/(np.sqrt(mass_errorp**2 + mass_errorn**2))
+magnet_width_significance1=differnce_width/(np.sqrt(width_errorp**2 + width_errorn**2))
 
 with open("dipole_table.tex", "w") as f:
     f.write(r"\begin{table}[H]" + "\n")
@@ -130,11 +130,11 @@ with open("dipole_table.tex", "w") as f:
 
     f.write(f"Mass [GeV] & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
             f"${massn:.5f} \pm {mass_errorn:.2f}$ & "
-            f"${magnet_mass_significance:.5f} $\\\\\n")
+            f"${magnet_mass_significance1:.5f} $\\\\\n")
 
     f.write(f"Width [GeV] & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
             f"${widthn:.5f} \pm {width_errorn:.2f}$ & "
-            f"${magnet_width_significance:.5f} $ \\\\\n")
+            f"${magnet_width_significance1:.5f} $ \\\\\n")
 
     f.write(f"$\\chi^2$ & {chi2p:.2f} & {chi2n:.2f} & N/A\\\\\n")
 
@@ -169,8 +169,8 @@ corelationn=np.sqrt((mass_width[6])**2)
 differnce_mass = np.sqrt((massp-massn)**2)
 differnce_width = np.sqrt((widthp-widthn)**2)
 
-magnet_mass_significance=differnce_mass/(np.sqrt(mass_errorp**2 + mass_errorn**2))
-magnet_width_significance=differnce_width/(np.sqrt(width_errorp**2 + width_errorn**2))
+magnet_mass_significance2=differnce_mass/(np.sqrt(mass_errorp**2 + mass_errorn**2))
+magnet_width_significance2=differnce_width/(np.sqrt(width_errorp**2 + width_errorn**2))
 with open("Angle_table.tex", "w") as f:
     f.write(r"\begin{table}[H]" + "\n")
     f.write(r"\centering" + "\n")
@@ -181,11 +181,11 @@ with open("Angle_table.tex", "w") as f:
 
     f.write(f"Mass [GeV] & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
             f"${massn:.5f} \pm {mass_errorn:.2f}$ & "
-            f"${magnet_mass_significance:.5f} $\\\\\n")
+            f"${magnet_mass_significance2:.5f} $\\\\\n")
 
     f.write(f"Width [GeV] & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
             f"${widthn:.5f} \pm {width_errorn:.2f}$ & "
-            f"${magnet_width_significance:.5f} $ \\\\\n")
+            f"${magnet_width_significance2:.5f} $ \\\\\n")
 
     f.write(f"$\\chi^2$ & {chi2p:.2f} & {chi2n:.2f} & N/A\\\\\n")
 
@@ -219,8 +219,8 @@ corelationn=np.sqrt((mass_width[6])**2)
 differnce_mass = np.sqrt((massp-massn)**2)
 differnce_width = np.sqrt((widthp-widthn)**2)
 
-magnet_mass_significance=differnce_mass/(np.sqrt(mass_errorp**2 + mass_errorn**2))
-magnet_width_significance=differnce_width/(np.sqrt(width_errorp**2 + width_errorn**2))
+magnet_mass_significance3=differnce_mass/(np.sqrt(mass_errorp**2 + mass_errorn**2))
+magnet_width_significance3=differnce_width/(np.sqrt(width_errorp**2 + width_errorn**2))
 with open("Dimuon-transverse-P.tex", "w") as f:
     f.write(r"\begin{table}[H]" + "\n")
     f.write(r"\centering" + "\n")
@@ -231,11 +231,11 @@ with open("Dimuon-transverse-P.tex", "w") as f:
 
     f.write(f"Mass [GeV] & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
             f"${massn:.5f} \pm {mass_errorn:.2f}$ & "
-            f"${magnet_mass_significance:.5f} $\\\\\n")
+            f"${magnet_mass_significance3:.5f} $\\\\\n")
 
     f.write(f"Width [GeV] & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
             f"${widthn:.5f} \pm {width_errorn:.2f}$ & "
-            f"${magnet_width_significance:.5f} $ \\\\\n")
+            f"${magnet_width_significance3:.5f} $ \\\\\n")
 
     f.write(f"$\\chi^2$ & {chi2p:.2f} & {chi2n:.2f} & N/A\\\\\n")
 
@@ -257,7 +257,7 @@ ndfp=mass_width[5]
 corelationp=np.sqrt((mass_width[6])**2)
 
 
-fname12 = "../mphys-electroweak-project/90-bins"
+fname12 = "../mphys-electroweak-project/80-bins"
 mass_width = np.loadtxt(fname12, dtype=float)
 massn=mass_width[0]
 widthn=mass_width[1]
@@ -329,4 +329,19 @@ with open("selection_table.tex", "w") as f:
     f.write(r"\hline" + "\n")
     f.write(r"\end{tabular}" + "\n")
     f.write(r"\caption{Transver momentum selection of $>$ 20 Gev per in both muons and pseudorapidity selection 2.2$<\eta <$4.4}" + "\n")
+    f.write(r"\end{table}" + "\n")
+
+
+with open("significance_table.tex", "w") as f:
+    f.write(r"\begin{table}[H]" + "\n")
+    f.write(r"\centering" + "\n")
+    f.write(r"\begin{tabular}{l c c c}" + "\n")  # 4 columns now
+    f.write(r"\hline" + "\n")
+    f.write(r" & magnetic dipole & Dimuon $P_T$ & azimuthal angle \\" + "\n")
+    f.write(r"\hline" + "\n")
+    f.write(f"Significance on the mass & {magnet_mass_significance1:.5f}  & {magnet_mass_significance3:.5f}  & {magnet_mass_significance2:.5f}  \\\\\n")
+    f.write(f"Significance on the width & {magnet_width_significance1:.5f}  & {magnet_width_significance3:.5f}  & {magnet_mass_significance2:.5f}  \\\\\n")
+    f.write(r"\hline" + "\n")
+    f.write(r"\end{tabular}" + "\n")
+    f.write(r"\caption{Significance values for three validation checks}" + "\n")
     f.write(r"\end{table}" + "\n")
