@@ -11,7 +11,7 @@ from json import dump,load
 #from scipy.stats documentation crystallball(x,beta,m): x = (x-mean)/sd
 #Needed the loc and scale to act analogous to the mean and sd in a Gaussian
 def CrystalBallFitBg(x,beta,m,loc,scale,N,F,Z,A,B,binwidth):
-    return (N*crystalball.pdf(x,beta,m,loc=loc,scale=scale) + F*crystalball.pdf(x,beta,m,loc=loc,scale=Z*scale) + A*np.exp(B*x))*binwidth
+    return (N*crystalball.pdf(x,beta,m,loc=loc,scale=scale) + F*crystalball.pdf(x,beta,m,loc=loc,scale=Z*scale) + (A+B*x))*binwidth
 
 def CrystalBallFitNoBg(x,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=0):
     return CrystalBallFitBg(x,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=binwidth)
@@ -61,8 +61,8 @@ def UsefulValues(data,calibration_factor=1,smear=None):
     #For now I am only using these 4 values
     return mup_P,mum_P,mup_E,mum_E
 
+##File no longer contains px,py,pz but pt,eta,phi so needs to convert to reconstruct the mass
 def ConvertCoords(data):
-    #File no longer contains px,py,pz but pt,eta,phi so needs to convert to reconstruct the mass
     #REMEMBER THESE ARE IN GEV!!
     data["mup_PX"] = data["mup_pt"]*np.cos(data["mup_phi"])
     data["mup_PY"] = data["mup_pt"]*np.sin(data["mup_phi"])
@@ -86,7 +86,7 @@ def Reconstruct(mup_P,mum_P,mup_E,mum_E):
 #loc and smear are just variables to determine the file name the graph will be saved under
 def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     #xmassHist, xbins, x = plt.hist(mass,bins=100,range=(9.2,9.75),histtype='step')
-    massHist,bins = np.histogram(mass,bins=100,range=(9.15,9.750))
+    massHist,bins = np.histogram(mass,bins=100,range=(9.15,9.75))
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -98,14 +98,10 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     
     #Crystal Ball fit:
     p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,N_tot,N_tot/2,0.5,0.5*N_tot,0.3]
-    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0, -1e-2, -1e-10], [5.0, 10.0, 9.50, 0.10,  1.01*N_tot, 1.01*N_tot, 1e3, 10*N_tot, 100.0])
+    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0, -1e-2, -10], [5.0, 10.0, 9.50, 0.10,  1.01*N_tot, 1.01*N_tot, 1e3, 10*N_tot, 10])
     if sim:
         fitfunc = CrystalBallFitNoBg
-        #p0[5] = 0.0
-        #p0[6] = 0.0
         p0 = [1.35259258,3.40023716,9.45816238,4.00892327e-02,0.8*N_tot,0.5*N_tot,0.1,0.0,0.0]
-        # p0 = [1.17968836, 2.84337456, 9.45874253, 4.69999659e-02, 3.75594873e+05, 3.52255401e+05, 0.75, 0.0, 0.0]
-        # p0 = [1.87514072,5.77014894,9.45767286,3.67106879e-02,3.96585919e+05,1.56756017e+05,1.5,0.0,0.0]
         if test:
             p0 = test_p0
         #print("CALCULATING SIM")
@@ -119,7 +115,7 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     beta,m,loc,scale,N,F,Z,A,B = fitParam
     plt.plot(bincenters,CrystalBallFitNoBg(bincenters,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=binwidth),label="Crystal Ball Functions", color="red")
     if not sim:
-        plt.plot(bincenters,fitParam[7]*np.exp(fitParam[8]*bincenters)*binwidth,label="background",color="blue")
+        plt.plot(bincenters,(fitParam[7]+fitParam[8]*bincenters)*binwidth,label="background",color="blue")
         combined_model = CrystalBallFitBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5],fitParam[6],fitParam[7],fitParam[8],binwidth)
         plt.plot(bincenters,combined_model,label="combined",color="purple")
     
@@ -177,8 +173,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     #background = np.min(data_massHist)
 
     fitParam = PlotHistogram(data_mass,'DATA_fit',Output=True)
-    background = fitParam["A"][0]*np.exp(1*float(fitParam["B"][0])*bincenters)*binwidth
-
+    background = (fitParam["A"][0]+float(fitParam["B"][0])*bincenters)*binwidth
     unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.15,9.75)))
     scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.15,9.75)))
 
@@ -208,8 +203,8 @@ def Comparing(sim_branches,data_branches):
     try:
         with open("Calibration_output.json",) as InputFile:
             Calibration = load(InputFile)
-        alpha = 1 - Calibration["C_ratio"][0]
-        Smear_factor = Calibration["Smear_factor"][0]
+        alpha = (1 - Calibration["C_ratio"][0])#*0.1
+        Smear_factor = Calibration["Smear_factor"][0]#*25
     except FileNotFoundError:
         print('Please run the script with --FullOutput="TRUE" first to get calibration information')
         return 1
