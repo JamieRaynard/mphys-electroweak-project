@@ -3,7 +3,7 @@
 import uproot
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.optimize import curve_fit,minimize_scalar
+from scipy.optimize import curve_fit,minimize
 import argparse
 from scipy.stats import crystalball
 from json import dump,load
@@ -11,7 +11,7 @@ from json import dump,load
 #from scipy.stats documentation crystallball(x,beta,m): x = (x-mean)/sd
 #Needed the loc and scale to act analogous to the mean and sd in a Gaussian
 def CrystalBallFitBg(x,beta,m,loc,scale,N,F,Z,A,B,binwidth):
-    return (N*crystalball.pdf(x,beta,m,loc=loc,scale=scale) + F*crystalball.pdf(x,beta,m,loc=loc,scale=Z*scale) + (A+B*x))*binwidth
+    return (N*crystalball.pdf(x,beta,m,loc=loc,scale=scale) + F*crystalball.pdf(x,beta,m,loc=loc,scale=Z*scale))*binwidth + (A+B*x)
 
 def CrystalBallFitNoBg(x,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=0):
     return CrystalBallFitBg(x,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=binwidth)
@@ -161,6 +161,14 @@ def CalcEffectiveWidth(N,scale,F,Z,N_err,scale_err,F_err,Z_err):
     width_err_tot = np.sqrt(width_err_N**2 + width_err_scale**2+ width_err_F**2 + width_err_Z**2)
     return (eff_width,width_err_tot)
 
+def Chi2(params,sim_massHist,data_massHist):
+    A,B = params
+    model = sim_massHist
+    #FINISH
+
+def CalcBackground(sim_massHist,data_massHist):
+    return minimize(Chi2,x0=[1.0,1.0],args=(sim_massHist,data_massHist))
+
 def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.15,9.75))
     binwidth = bins[1] - bins[0]
@@ -173,7 +181,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     #background = np.min(data_massHist)
 
     fitParam = PlotHistogram(data_mass,'DATA_fit',Output=True)
-    background = (fitParam["A"][0]+float(fitParam["B"][0])*bincenters)*binwidth
+    background = (fitParam["A"][0]+float(fitParam["B"][0])*bincenters)
     unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.15,9.75)))
     scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.15,9.75)))
 
