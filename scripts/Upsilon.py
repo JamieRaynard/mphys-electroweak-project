@@ -3,7 +3,7 @@
 import uproot
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.optimize import curve_fit,minimize_scalar
+from scipy.optimize import curve_fit,minimize
 import argparse
 from scipy.stats import crystalball
 from json import dump,load
@@ -11,7 +11,7 @@ from json import dump,load
 #from scipy.stats documentation crystallball(x,beta,m): x = (x-mean)/sd
 #Needed the loc and scale to act analogous to the mean and sd in a Gaussian
 def CrystalBallFitBg(x,beta,m,loc,scale,N,F,Z,A,B,binwidth):
-    return (N*crystalball.pdf(x,beta,m,loc=loc,scale=scale) + F*crystalball.pdf(x,beta,m,loc=loc,scale=Z*scale) + (A+B*x))*binwidth
+    return (N*crystalball.pdf(x,beta,m,loc=loc,scale=scale) + F*crystalball.pdf(x,beta,m,loc=loc,scale=Z*scale))*binwidth + (A+B*x)
 
 def CrystalBallFitNoBg(x,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=0):
     return CrystalBallFitBg(x,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=binwidth)
@@ -161,6 +161,15 @@ def CalcEffectiveWidth(N,scale,F,Z,N_err,scale_err,F_err,Z_err):
     width_err_tot = np.sqrt(width_err_N**2 + width_err_scale**2+ width_err_F**2 + width_err_Z**2)
     return (eff_width,width_err_tot)
 
+def Chi2(params,sim_massHist,data_massHist,bincenters):
+    A,B = params
+    model = sim_massHist+(A+B*bincenters)
+    return np.sum((model-data_massHist)**2/data_massHist)
+
+def CalcBackground(sim_massHist,data_massHist,bincenters,x0):
+    result = minimize(Chi2,x0=x0,args=(sim_massHist,data_massHist,bincenters))
+    return result.x[0] + result.x[1]*bincenters
+
 def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.15,9.75))
     binwidth = bins[1] - bins[0]
@@ -169,11 +178,8 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
         binlist.append(binlist[-1]+binwidth)
     bincenters = np.array(binlist)
 
-    #(Probably too) simplistic model for the background of just a flat uniform dist.
-    #background = np.min(data_massHist)
-
     fitParam = PlotHistogram(data_mass,'DATA_fit',Output=True)
-    background = (fitParam["A"][0]+float(fitParam["B"][0])*bincenters)*binwidth
+    background = (fitParam["A"][0]+float(fitParam["B"][0])*bincenters)
     unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.15,9.75)))
     scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.15,9.75)))
 
@@ -182,10 +188,21 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     unscaled_sim_massHist = unscaled_sim_massHist * (np.sum(data_massHist_noBG)/np.sum(unscaled_sim_massHist))
     scaled_sim_massHist = scaled_sim_massHist * (np.sum(data_massHist_noBG)/np.sum(scaled_sim_massHist))
     
+    x0 = (fitParam['A'][0],fitParam['B'][0])
+    unscaled_background = CalcBackground(unscaled_sim_massHist,data_massHist,bincenters,x0)
+    scaled_background = CalcBackground(scaled_sim_massHist,data_massHist,bincenters,x0)
 
-    plt.bar(bincenters, background, width=binwidth, label="Background", color="lightgray", align="center")
-    plt.step(bincenters, unscaled_sim_massHist+background,where="mid",label="Sim without smearing",color="blue",zorder=2)
-    plt.step(bincenters, scaled_sim_massHist+background, where="mid", label="Sim with smearing",color="orange",zorder=2)
+    unscaled_sim_massHist = unscaled_sim_massHist + unscaled_background
+    scaled_sim_massHist = scaled_sim_massHist + scaled_background
+
+    unscaled_sim_massHist = unscaled_sim_massHist * (np.sum(data_massHist)/np.sum(unscaled_sim_massHist))
+    scaled_sim_massHist = scaled_sim_massHist * (np.sum(data_massHist)/np.sum(scaled_sim_massHist))
+
+    plt.plot(bincenters,unscaled_background,color="blue",linestyle="--",zorder=1)
+    plt.plot(bincenters,scaled_background,color="orange",linestyle="--",zorder=1)
+    #plt.bar(bincenters, background, width=binwidth, label="Background", color="lightgray", align="center")
+    plt.step(bincenters, unscaled_sim_massHist,where="mid",label="Sim without smearing",color="blue",zorder=2)
+    plt.step(bincenters, scaled_sim_massHist, where="mid", label="Sim with smearing",color="orange",zorder=2)
     plt.scatter(bincenters, data_massHist, label = "Data", s=2 ,c='black',zorder=3)
     plt.errorbar(bincenters, data_massHist, yerr=np.sqrt(data_massHist),fmt='none')
 

@@ -37,7 +37,7 @@ with open("results_table.tex", "w") as f:
     f.write(r"\hline" + "\n")
     f.write(f"Calibration error & {Calibration_ratio_mass_error:.5f} & {Calibration_ratio_width_error:.5f} \\\\\n")
     f.write(f"Smearing error & {smear_mass_error:.5f} & {smear_width_error:.5f} \\\\\n")
-    f.write(r'$\Upsilon$(1S) mass error & 0.0001 & 0.0000 \\' + '\n')
+    f.write(r'$\Upsilon$(1S) mass error & 0.00100 & 0.00000 \\' + '\n')
     f.write(r"\hline" + "\n")
     f.write(r"\end{tabular}" + "\n")
     f.write(r"\caption{Z Systematic error on mass and width}" + "\n")
@@ -53,7 +53,7 @@ chi2=mass_width[4]
 ndf=mass_width[5]
 corelation=np.sqrt((mass_width[6])**2)
 
-mass_syst_err=np.sqrt(Calibration_ratio_mass_error**2 +smear_mass_error**2)
+mass_syst_err=np.sqrt(Calibration_ratio_mass_error**2 +smear_mass_error**2+0.001**2)
 width_syst_err=np.sqrt(Calibration_ratio_width_error**2 +smear_width_error**2)
 with open("mass_width_results_table.tex", "w") as f:
     f.write(r"\begin{table}[H]" + "\n")
