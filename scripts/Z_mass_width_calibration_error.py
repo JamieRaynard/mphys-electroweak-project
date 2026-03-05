@@ -53,7 +53,7 @@ chi2=mass_width[4]
 ndf=mass_width[5]
 corelation=np.sqrt((mass_width[6])**2)
 
-mass_syst_err=np.sqrt(Calibration_ratio_mass_error**2 +smear_mass_error**2)
+mass_syst_err=np.sqrt(Calibration_ratio_mass_error**2 +smear_mass_error**2+0.001**2)
 width_syst_err=np.sqrt(Calibration_ratio_width_error**2 +smear_width_error**2)
 with open("mass_width_results_table.tex", "w") as f:
     f.write(r"\begin{table}[H]" + "\n")
