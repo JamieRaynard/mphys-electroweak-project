@@ -334,11 +334,12 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
 
 
 
+
     best_interpolate_template=griddata(coords,templates,(mass_result,width_result),method='linear')#-----------------------best fit
 
     ax1.errorbar(centers, dataHist, yerr=dataerrors,label='Data ',color="black",fmt=".",markersize=2.5 )
-    ax1.step(centers, best_interpolate_template, '-', linewidth=2,where='mid', label='best fit interprolate tempalte')
-    ax1.set_ylabel("Frequency")
+    ax1.step(centers, best_interpolate_template, '-', linewidth=2,where='mid', label='best fit')
+    ax1.set_ylabel("Counts")
     ax1.legend(loc='upper left',frameon=True, fontsize=8)
     ax1.set_ylim(bottom=0)
     # bottom
@@ -355,15 +356,16 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     ratio_data_91_2=dataHist/best_interpolate_template
     ratioerror=ratio_data_91_2*dataerrors/dataHist
     #ax2.scatter(centers,ratio_data_91,label='data ',color="black",s=10)
-    ax2.errorbar(centers, ratio_data_91_2, yerr=ratioerror,label='Data/best fit ',color="black",fmt=".",markersize=2.5 )
-    ax2.step(centers, ratio_a, '-', linewidth=1,where='mid', label='mass+0.3 Gev/best fit',color="red")
-    ax2.step(centers, ratio_fit, '-', linewidth=1,where='mid', label='best fit /best fit')
-    ax2.step(centers, ratio_b, '-', linewidth=1,where='mid', label='mass-0.3 Gev/best fit  ',color="orange")
-    ax2.step(centers, ratio_c, '-', linewidth=1,where='mid', label='width+0.5 Gev/best fit',color="blue")
-    ax2.step(centers, ratio_d, '-', linewidth=1,where='mid', label='width-0.5 Gev Gev/best fit',color="lightblue")
-    ax2.set_ylabel("Ratio")
-    ax2.set_xlabel("Dimuon mass GeV")
+    ax2.errorbar(centers, ratio_data_91_2, yerr=ratioerror,label='Data ',color="black",fmt=".",markersize=2.5 )
+    ax2.step(centers, ratio_a, '-', linewidth=1,where='mid', label='mass',color="red")
+    ax2.step(centers, ratio_fit, '-', linewidth=1,where='mid',color="black")
+    ax2.step(centers, ratio_b, '-', linewidth=1,where='mid', color="red")
+    ax2.step(centers, ratio_c, '-', linewidth=1,where='mid', label='width ',color="blue")
+    ax2.step(centers, ratio_d, '-', linewidth=1,where='mid', color="blue")
+    ax2.set_ylabel("Ratio/best fit")
+    ax2.set_xlabel("Mass / GeV")
     ax2.set_ylim(bottom=0.8)
+    ax1.set_xlim(86, 96)
     ax2.legend(loc='upper left',frameon=True, fontsize=8)
     plt.savefig(f"transient/Z-stack_similtaneous ({'real' if use_diagram==True else use_diagram}).pdf")
                 
@@ -444,15 +446,43 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     #ax.fill_betweenx(y=ax.get_ylim(),x1=lhcb_E - lhcb_E,x2=lhcb_E + lhcb_E,alpha=0.3,color="grey")
 
  
-    #CDF
-    Z_mass_CDF=91.1943
-    CDF_E=0.0138
-    x_vals = np.linspace(*ax.get_xlim(), 500)
-    ax.axvline(x=Z_mass_CDF,label="CDF",color='orange')
-    ax.axvline(x=Z_mass_CDF + CDF_E, linestyle='--',color='orange')
-    ax.axvline(x=Z_mass_CDF - CDF_E, linestyle='--',color='orange')
+
     ax.legend(loc="upper left")
     plt.savefig(f"transient/Z-Error-Ellipse ({'real' if use_diagram==True else use_diagram}).pdf")
+    
+    #---------------------mass graph only
+    fig, ax = plt.subplots()
+    y=[5]
+    x=[mass_result]
+    x_er=[mass_error]
+    ax.errorbar(x, y, xerr=x_er , fmt='o', color='red', capsize=3,label="Our result")
+        
+    y=[7] 
+    x=[Z_mass_lhcb]
+    x_er=[lhcb_E]
+    ax.errorbar(x, y, xerr=x_er , fmt='o', color='black', capsize=3,label="Prior LHCb")
+    sm_theory_mass=91.2047
+    sm_theory_massE=0.0088
+    y=[1]   
+    x=[sm_theory_mass]
+    x_er=[sm_theory_massE]
+    ax.errorbar(x, y, xerr=x_er , fmt='o', color='blue', capsize=3,label="Standard model prediction")
+    
+    y=[3]   
+    x=[theory_mass]
+    x_er=[theory_massE]
+    ax.errorbar(x, y, xerr=x_er , fmt='o', color='green', capsize=3,label="LEP")
+
+    Z_mass_CDF=91.1943
+    CDF_E=0.0138
+    y=[9]   
+    x=[Z_mass_CDF]
+    x_er=[CDF_E]
+    ax.errorbar(x, y, xerr=x_er , fmt='o', color='yellow', capsize=3,label="CDF")
+    ax.legend(loc="upper left")
+    ax.set_xlabel("Mass / GeV")
+    ax.set_yticks([])
+    plt.savefig(f"transient/Z-mass ({'real' if use_diagram==True else use_diagram}).pdf")
     
 #selection cuts------------------------
 
