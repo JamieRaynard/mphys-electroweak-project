@@ -337,8 +337,8 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
 
     best_interpolate_template=griddata(coords,templates,(mass_result,width_result),method='linear')#-----------------------best fit
 
-    ax1.errorbar(centers, dataHist, yerr=dataerrors,label='Data ',color="black",fmt=".",markersize=2.5 )
-    ax1.step(centers, best_interpolate_template, '-', linewidth=2,where='mid', label='best fit')
+    ax1.errorbar(centers, dataHist, yerr=dataerrors,label='Data ',color="black",fmt=".",markersize=4 )
+    ax1.step(centers, best_interpolate_template, '-', linewidth=1.2,where='mid', label='best fit')
     ax1.set_ylabel("Counts")
     ax1.legend(loc='upper left',frameon=True, fontsize=8)
     ax1.set_ylim(bottom=0)
@@ -356,15 +356,15 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     ratio_data_91_2=dataHist/best_interpolate_template
     ratioerror=ratio_data_91_2*dataerrors/dataHist
     #ax2.scatter(centers,ratio_data_91,label='data ',color="black",s=10)
-    ax2.errorbar(centers, ratio_data_91_2, yerr=ratioerror,label='Data ',color="black",fmt=".",markersize=2.5 )
-    ax2.step(centers, ratio_a, '-', linewidth=1,where='mid', label='mass',color="red")
-    ax2.step(centers, ratio_fit, '-', linewidth=1,where='mid',color="black")
-    ax2.step(centers, ratio_b, '-', linewidth=1,where='mid', color="red")
-    ax2.step(centers, ratio_c, '-', linewidth=1,where='mid', label='width ',color="blue")
-    ax2.step(centers, ratio_d, '-', linewidth=1,where='mid', color="blue")
+    ax2.errorbar(centers, ratio_data_91_2, yerr=ratioerror,label='Data ',color="black",fmt=".",markersize=4)
+    ax2.step(centers, ratio_a, '-', linewidth=0.8,where='mid', label='mass',color="red")
+    ax2.step(centers, ratio_fit, '-', linewidth=0.8,where='mid',color="black")
+    ax2.step(centers, ratio_b, '-', linewidth=0.8,where='mid', color="red")
+    ax2.step(centers, ratio_c, '-', linewidth=0.8,where='mid', label='width ',color="blue")
+    ax2.step(centers, ratio_d, '-', linewidth=0.8,where='mid', color="blue")
     ax2.set_ylabel("Ratio/best fit")
     ax2.set_xlabel("Mass / GeV")
-    ax2.set_ylim(bottom=0.8)
+    ax2.set_ylim(bottom=0.85)
     ax1.set_xlim(86, 96)
     ax2.legend(loc='upper left',frameon=True, fontsize=8)
     plt.savefig(f"transient/Z-stack_similtaneous ({'real' if use_diagram==True else use_diagram}).pdf")
@@ -391,7 +391,7 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     ax.set_title("Mass Width error Ellipse") 
     
     ax.set_xlim(91.11, 91.22) 
-    ax.set_ylim(2,2.56)
+    ax.set_ylim(1.8,2.56)
 
     theory_corelation=0.29342  #Theory------------------------------
     theory_mass=91.2047
