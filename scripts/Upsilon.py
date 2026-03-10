@@ -85,18 +85,8 @@ def Reconstruct(mup_P,mum_P,mup_E,mum_E):
     mass = np.sqrt(mass_sq)
     return mass
 
-def FixedCBNoBG(x, loc, scale, N, A=0, B=0, fixed=(0,0,0,0), binwidth=0):
-    beta,m,Z,frac = fixed
-    F = frac*N
-    return CrystalBallFitNoBg(x,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=binwidth)
-
-def FixedCB(x, loc, scale, N, A, B, fixed=(0,0,0,0), binwidth=0):
-    beta,m,Z,frac = fixed
-    F = frac*N
-    return CrystalBallFitBg(x,beta,m,loc,scale,N,F,Z,A,B,binwidth=binwidth)
-
 #loc and smear are just variables to determine the file name the graph will be saved under
-def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None,fixed=None):
+def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     plt.figure()
     massHist,bins = np.histogram(mass,bins=100,range=(9.15,9.75))
     binwidth = bins[1] - bins[0]
@@ -108,45 +98,13 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None,fi
     plt.scatter(bincenters,massHist,s=5 ,c='black')
     plt.errorbar(bincenters,massHist,yerr=np.sqrt(massHist),fmt='none',ecolor='black',elinewidth=1,capsize=2)
     
-    if fixed:
-        beta,m,Z,frac = fixed
-        N = N_tot/(1+frac)
-        print(f"Fixed params: beta={beta:.4f}, m={m:.4f}, Z={Z:.4f}, frac={frac:.4f}")
-        p0 = [9.46, 0.04, N, 0.5*N_tot, 0.3]
-        bounds = ([9.4,0.005,0.0,-1e-2,-10],[9.5,0.1,1.01*N_tot,10*N_tot,10])
-        if sim:
-            fitfunc = FixedCBNoBG
-            p0 = [9.46, 0.04, N, 0, 0]
-            bounds = ([9.4,0.005,0.0,-1e-12,-1e-12],[9.5,0.1,N_tot,1e-12,1e-12])
-        else:
-            fitfunc = FixedCB
-        fitParam, cov = curve_fit(lambda x, loc, scale, N, A, B: fitfunc(x, loc, scale, N, A, B, fixed=fixed, binwidth=binwidth), bincenters, massHist, p0=p0, bounds=bounds, method='dogbox', x_scale='jac', maxfev=100000)
-        err = np.sqrt(np.diag(cov))
-        loc, scale, N, A, B = fitParam
-        F = frac*N
-        print("Just output left...")
-        if Output:
-            #At the moment these are the only values I use but can add others (e.g. for A and B for background) easily here
-            eff_width, eff_width_err = CalcEffectiveWidth(N,scale,F,Z,err[2],err[1],0,0)
-            print(f'Sim {sim}: sigma: {scale}, Z: {Z}')
-            outputvalues = {
-                "mass": (loc,err[0]),
-                "width": (eff_width,eff_width_err),
-                "A": (A,err[3]),
-                "B": (B,err[4])
-            }
-            return (outputvalues)
-        else:
-            return 0
-
-
     #Crystal Ball fit:
     p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,N_tot,N_tot/2,0.5,0.5*N_tot,0.3]
-    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0, -1e-2, -10], [5.0, 10.0, 9.50, 0.10,  1.01*N_tot, 1.01*N_tot, 5, 10*N_tot, 10])
+    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0, -1e-2, -10], [5.0, 10.0, 9.50, 0.10,  N_tot, N_tot, 5, 10*N_tot, 10])
     if sim:
         fitfunc = CrystalBallFitNoBg
         p0 = [1.35259258,3.40023716,9.45816238,4.00892327e-02,0.8*N_tot,0.5*N_tot,0.1,0.0,0.0]
-        
+        #print("CALCULATING SIM")
     else:
         fitfunc = CrystalBallFitBg
     fitParam, cov = curve_fit(lambda x, beta, m, loc, scale, Ns, F, Z, A, B: fitfunc(x, beta, m, loc, scale, Ns, F, Z, A, B, binwidth), bincenters, massHist, p0=p0, bounds=bounds, maxfev=100000)
@@ -191,7 +149,6 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None,fi
 def EffectiveWidth(N,scale,F,Z):
     f_1 = N/(N+F)
     f_2 = F/(N+F)
-    #return np.sqrt((f_1*scale)**2 + (f_2*Z*scale)**2)
     return np.sqrt(f_1*scale**2 + f_2*(Z*scale)**2)
     #return scale
 
@@ -263,7 +220,7 @@ def Comparing(sim_branches,data_branches):
     try:
         with open("Calibration_output.json",) as InputFile:
             Calibration = load(InputFile)
-        c_rat = (Calibration["C_ratio"][0])#*0.1
+        c_rat = Calibration["C_ratio"][0]#*0.1
         Smear_factor = Calibration["Smear_factor"][0]#*25
     except FileNotFoundError:
         print('Please run the script with --FullOutput="TRUE" first to get calibration information')
@@ -278,7 +235,7 @@ def Comparing(sim_branches,data_branches):
     mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches)
     unscaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
 
-    calibration_factor = c_rat    
+    calibration_factor = c_rat   
     mup_P,mum_P,mup_E,mum_E = UsefulValues(sim_branches,calibration_factor=calibration_factor,smear=Smear_factor)
     scaled_sim_mass = Reconstruct(mup_P,mum_P,mup_E,mum_E)
     CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass)
@@ -315,38 +272,23 @@ def CalcC(alpha_s,alpha_d):
     err_tot = np.sqrt(err_s**2+err_d**2)
     return (c,err_tot)
 
-def CalcRMSWidth(mass, mass_center, mass_range=(9.15, 9.75)):
-    hist, bins = np.histogram(mass, bins=100, range=mass_range)
-    binwidth = bins[1] - bins[0]
-    bincenters = bins[:-1] + 0.5*binwidth
-    # centre around peak
-    weights = np.maximum(hist, 0)
-    rms = np.sqrt(np.sum(weights * (bincenters - mass_center)**2) / np.sum(weights))
-    return rms
-
 def SmearFactor(sim_width,sim_mass,data_width,data_mass,p_scale=1):
     return (1/p_scale)*np.sqrt(abs((data_width/data_mass)**2-(sim_width/sim_mass)**2))
 
 def CalcSmearFactor(sim_branches,data_branches,model='Naive',calibration=1):
     mup_P_sim, mum_P_sim, mup_E_sim, mum_E_sim = UsefulValues(sim_branches,calibration_factor=calibration)
     sim_mass = Reconstruct(mup_P_sim,mum_P_sim,mup_E_sim,mum_E_sim)
-    sim_params = PlotHistogram(sim_mass,"U1S",Output="test",sim=True)
-    beta,m,loc,scale,N,F,Z,A,B = sim_params
-    frac = F/(N+F)
-    fixed = [beta,m,Z,frac]
-    sim_results = PlotHistogram(sim_mass,"U1S",Output=True,sim=True,fixed=fixed)
+    sim_results = PlotHistogram(sim_mass,"U1S",Output=True,sim=True)
     mup_P_dat, mum_P_dat, mup_E_dat, mum_E_dat = UsefulValues(data_branches)
     data_mass = Reconstruct(mup_P_dat,mum_P_dat,mup_E_dat,mum_E_dat)
-    data_results = PlotHistogram(data_mass,"DATA",Output=True,fixed=fixed)
+    data_results = PlotHistogram(data_mass,"DATA",Output=True)
     if model !='Naive':
         mup_P_mag = np.sqrt(mup_P_sim[0]**2+mup_P_sim[1]**2+mup_P_sim[2]**2)
         mum_P_mag = np.sqrt(mum_P_sim[0]**2+mum_P_sim[1]**2+mum_P_sim[2]**2)
         p_scale = np.mean([mup_P_mag,mum_P_mag])#,mup_P_dat,mum_P_dat])
     else:
         p_scale = 1
-    print(f"Free fit scale: {scale:.5f}")
-    print(f"Fixed sim width: {sim_results['width'][0]:.5f}")
-    print(f"Fixed data width: {data_results['width'][0]:.5f}")
+    
     print(f'Data width: {data_results["width"][0]} ± {data_results["width"][1]} \nUnsmeared sim width: {sim_results["width"][0]} ± {sim_results["width"][1]}')
     sigma = SmearFactor(sim_results["width"][0],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0],p_scale)
     err_due_sim_width = SmearFactor(sim_results["width"][0]+sim_results["width"][1],sim_results["mass"][0],data_results["width"][0],data_results["mass"][0],p_scale) - sigma
@@ -356,17 +298,6 @@ def CalcSmearFactor(sim_branches,data_branches,model='Naive',calibration=1):
     err_sigma = np.sqrt(err_due_sim_width**2+err_due_sim_mass**2+err_due_data_width**2+err_due_data_mass**2)
     # sigma = sigma*p_scale #GET RID OF ME
     # err_sigma = err_sigma*p_scale
-    mup_P_sim, mum_P_sim, mup_E_sim, mum_E_sim = UsefulValues(sim_branches, 
-                                                    calibration_factor=calibration)
-    sim_mass = Reconstruct(mup_P_sim, mum_P_sim, mup_E_sim, mum_E_sim)
-    sim_results = PlotHistogram(sim_mass, "U1S", Output=True, sim=True)
-
-    mup_P_dat, mum_P_dat, mup_E_dat, mum_E_dat = UsefulValues(data_branches)
-    data_mass = Reconstruct(mup_P_dat, mum_P_dat, mup_E_dat, mum_E_dat)
-    data_results = PlotHistogram(data_mass, "DATA", Output=True)
-    sim_rms = CalcRMSWidth(sim_mass, sim_results["mass"][0])
-    data_rms = CalcRMSWidth(data_mass, data_results["mass"][0])
-    sigma = SmearFactor(sim_rms, sim_results["mass"][0], data_rms, data_results["mass"][0])
     return (sigma,err_sigma)
 
 
@@ -419,6 +350,7 @@ def main():
         sigma,sigma_err = CalcSmearFactor(sim_branches,data_branches,model='complex',calibration=c)
         print(f'WOOO got a smearing variable: {sigma} ± {sigma_err}')
         output["Smear_factor"] = (sigma,sigma_err)
+
     
     with open("Calibration_output.json","w") as OutputFile:
             dump(output,OutputFile,indent=2)
