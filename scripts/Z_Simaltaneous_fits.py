@@ -28,7 +28,7 @@ DATAIR="/storage/epp2/phshgg/Public/MPhysProject_2025_2026/tuples/1/"
 with uproot.open(f"{DATAIR}/DecayTree__Z__Z__d13600GeV_24c4.root:DecayTree") as t:
 
     #momentasim = t.arrays(["mup_PX","mup_PY","mup_PZ","mum_PX" ,"mum_PY" ,"mum_PZ"],library="np")
-    simdatam=t.arrays(["mum_eta","mum_phi","mum_pt","mup_eta" ,"mup_phi" ,"mup_pt","true_boson_mass"],library="np")  #i ahve ztrue and i ahve z reconstructed simulation
+    simdatam=t.arrays(["mum_eta","mum_phi","mum_pt","mup_eta" ,"mup_phi" ,"mup_pt","true_boson_mass","yearpol","V_PT"],library="np")  #i ahve ztrue and i ahve z reconstructed simulation
     
     tmass=simdatam["true_boson_mass"]
 
@@ -139,8 +139,8 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     x_fit = np.linspace(80, 100, 500)
     y_fit=fiteq(x_fit,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
     plt.plot(x_fit,y_fit)
-    plt.xlabel("Dimuon Mass GeV")
-    plt.ylabel("Events")
+    plt.xlabel("Dimuon Mass / GeV")
+    plt.ylabel("Normalised counts")
     plt.savefig(f"transient/True_mass_fit ({'real' if use_diagram==True else use_diagram}).pdf")
 
     # i want 9 differnet parameters
@@ -337,8 +337,8 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
 
     best_interpolate_template=griddata(coords,templates,(mass_result,width_result),method='linear')#-----------------------best fit
 
-    ax1.errorbar(centers, dataHist, yerr=dataerrors,label='Data ',color="black",fmt=".",markersize=2.5 )
-    ax1.step(centers, best_interpolate_template, '-', linewidth=2,where='mid', label='best fit')
+    ax1.errorbar(centers, dataHist, yerr=dataerrors,label='Data ',color="black",fmt=".",markersize=4 )
+    ax1.step(centers, best_interpolate_template, '-', linewidth=1.2,where='mid', label='best fit')
     ax1.set_ylabel("Counts")
     ax1.legend(loc='upper left',frameon=True, fontsize=8)
     ax1.set_ylim(bottom=0)
@@ -356,15 +356,15 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     ratio_data_91_2=dataHist/best_interpolate_template
     ratioerror=ratio_data_91_2*dataerrors/dataHist
     #ax2.scatter(centers,ratio_data_91,label='data ',color="black",s=10)
-    ax2.errorbar(centers, ratio_data_91_2, yerr=ratioerror,label='Data ',color="black",fmt=".",markersize=2.5 )
-    ax2.step(centers, ratio_a, '-', linewidth=1,where='mid', label='mass',color="red")
-    ax2.step(centers, ratio_fit, '-', linewidth=1,where='mid',color="black")
-    ax2.step(centers, ratio_b, '-', linewidth=1,where='mid', color="red")
-    ax2.step(centers, ratio_c, '-', linewidth=1,where='mid', label='width ',color="blue")
-    ax2.step(centers, ratio_d, '-', linewidth=1,where='mid', color="blue")
+    ax2.errorbar(centers, ratio_data_91_2, yerr=ratioerror,label='Data ',color="black",fmt=".",markersize=4)
+    ax2.step(centers, ratio_a, '-', linewidth=0.8,where='mid', label='mass',color="red")
+    ax2.step(centers, ratio_fit, '-', linewidth=0.8,where='mid',color="black")
+    ax2.step(centers, ratio_b, '-', linewidth=0.8,where='mid', color="red")
+    ax2.step(centers, ratio_c, '-', linewidth=0.8,where='mid', label='width ',color="blue")
+    ax2.step(centers, ratio_d, '-', linewidth=0.8,where='mid', color="blue")
     ax2.set_ylabel("Ratio/best fit")
     ax2.set_xlabel("Mass / GeV")
-    ax2.set_ylim(bottom=0.8)
+    ax2.set_ylim(bottom=0.85)
     ax1.set_xlim(86, 96)
     ax2.legend(loc='upper left',frameon=True, fontsize=8)
     plt.savefig(f"transient/Z-stack_similtaneous ({'real' if use_diagram==True else use_diagram}).pdf")
@@ -386,12 +386,12 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     ellipse = Ellipse( (mass_result, width_result), width=major_axis_length, height=minor_axis_length, angle=theta, edgecolor='red', facecolor='none', linewidth=2)
     ax.add_patch(ellipse)
     ax.scatter(mass_result, width_result, color='red', label='Experimental Measurement')
-    ax.set_xlabel("Mass") 
-    ax.set_ylabel("Width") 
+    ax.set_xlabel("Mass / GeV") 
+    ax.set_ylabel("Width / GeV") 
     ax.set_title("Mass Width error Ellipse") 
     
-    ax.set_xlim(91.11, 91.22) 
-    ax.set_ylim(2,2.56)
+    #ax.set_xlim(91.1, 91.22) 
+    #ax.set_ylim(1.6,2.56)
 
     theory_corelation=0.29342  #Theory------------------------------
     theory_mass=91.2047
@@ -439,17 +439,18 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     #lhcb
     Z_mass_lhcb=91.1857
     lhcb_E=0.0083
-    x_vals = np.linspace(*ax.get_xlim(), 500)
-    ax.axvline(x=Z_mass_lhcb,label="LHCb prior measurment",color='black')
-    ax.axvline(x=Z_mass_lhcb + lhcb_E, linestyle='--',color='black')
-    ax.axvline(x=Z_mass_lhcb - lhcb_E, linestyle='--',color='black')
-    #ax.fill_betweenx(y=ax.get_ylim(),x1=lhcb_E - lhcb_E,x2=lhcb_E + lhcb_E,alpha=0.3,color="grey")
+    ax.axvline(Z_mass_lhcb, color='black',label="LHCb prior measurment")
+    ax.axvline(Z_mass_lhcb + lhcb_E, linestyle='--', color='black')
+    ax.axvline(Z_mass_lhcb - lhcb_E, linestyle='--', color='black')
 
- 
+    ax.axvspan(Z_mass_lhcb - lhcb_E, Z_mass_lhcb + lhcb_E, color='grey', alpha=0.3)
+    #ax.fill_betweenx(y=ax.get_ylim(),x1=lhcb_E - lhcb_E,x2=lhcb_E + lhcb_E,alpha=0.3,color="grey")
 
     ax.legend(loc="upper left")
     plt.savefig(f"transient/Z-Error-Ellipse ({'real' if use_diagram==True else use_diagram}).pdf")
     
+
+
     #---------------------mass graph only
     fig, ax = plt.subplots()
     y=[5]
@@ -485,80 +486,122 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     plt.savefig(f"transient/Z-mass ({'real' if use_diagram==True else use_diagram}).pdf")
     
 #selection cuts------------------------
+def base_selection(data):
+    mask = (
+        (data["mup_eta"] < 4.4) &
+        (data["mum_eta"] < 4.4) &
+        (data["mup_eta"] > 2.2) &
+        (data["mum_eta"] > 2.2) &
+        (data["mum_pt"] > 20) &
+        (data["mup_pt"] > 20)
+    )
+    return {k: v[mask] for k, v in data.items()}, mask
 
-muon_pt_p=datam["mup_pt"]
-muon_pt_n=datam["mum_pt"]
+def magnet_selection(data):
+    Pmask = (
+        (data["yearpol"] > 0)        
+    )
+    Nmask= (
+        (data["yearpol"] < 0)        
+    )
+    return {k: v[Pmask] for k, v in data.items()}, Pmask,{k: v[Nmask] for k, v in data.items()}, Nmask
 
-muon_eta_p=datam["mup_eta"]
-muon_eta_n=datam["mum_eta"]
+def Azimuthal_selection(data):
+    Pmask = (
+        (data["mup_phi"] > 0)        
+    )
+    Nmask= (
+        (data["mup_phi"] < 0)        
+    )
+    return {k: v[Pmask] for k, v in data.items()}, Pmask,{k: v[Nmask] for k, v in data.items()}, Nmask
 
-pos_mask= (muon_eta_p < 4.4) & (muon_eta_n < 4.4) & (muon_eta_p > 2.2) & (muon_eta_n > 2.2) & (muon_pt_n > 20) & (muon_pt_p > 20)
-pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
+def Dimuonpt_selection(data):
+    Pmask = (
+        (data["V_PT"] > 18.3)        
+    )
+    Nmask= (
+        (data["V_PT"] < 18.3)        
+    )
+    return {k: v[Pmask] for k, v in data.items()}, Pmask,{k: v[Nmask] for k, v in data.items()}, Nmask
+
+def Pseudo_selection(data):
+    mask = (
+        (data["mup_eta"] < 4.4) &
+        (data["mum_eta"] < 4.4) &
+        (data["mup_eta"] > 2.2) &
+        (data["mum_eta"] > 2.2) 
+    )
+    return {k: v[mask] for k, v in data.items()}, mask
+
+def Pt_selection(data):
+    mask = (
+        (data["mum_pt"] > 20) &
+        (data["mup_pt"] > 20)
+    )
+    return {k: v[mask] for k, v in data.items()}, mask
+
+pos_data,mask= base_selection(datam)# data
+sim_pos_data,sim_mask= base_selection(simdatam)
+tmass_cut=tmass[sim_mask]
 seperate_Pt_psuedo_selection=True
-
-sim_fits(tmass,simdatam,pos_datam,calibration_factor,True,50) #-All DATA goes through the cuts
-
-
+sim_fits(tmass_cut,sim_pos_data,pos_data,calibration_factor,True,50) #-All DATA goes through the cuts
 
 if fname == f"mass-width_values_and_error.txt":
     fname="dont_use"
     # this is to test changing bin numbers------------------------------------------
-    sim_fits(tmass,simdatam,pos_datam,calibration_factor,"30-bins",30)
-    sim_fits(tmass,simdatam,pos_datam,calibration_factor,"80-bins",80)
+    sim_fits(tmass_cut,sim_pos_data,pos_data,calibration_factor,"30-bins",30)
+    sim_fits(tmass_cut,sim_pos_data,pos_data,calibration_factor,"80-bins",80)
 
 # this is to test for magnetic monople 
 #real means standard ie can use, watch out that adign the erros will chnage this so real is only trustworthy using general calibration and the run all script
 # make sure that calibration ="true" is used and nothign else or if using other arguenmtns make sure jsut calibration=ture is used last
-    magnet_pol=pos_datam["yearpol"]
-    #print(f"magnet valeus are { magnet_pol}")
-    pos_mask2= magnet_pol > 0
-    neg_mask2= magnet_pol < 0
-    pos_datam2= {k: v[pos_mask2] for k  , v in pos_datam.items()}
-    neg_datam2= {k: v[neg_mask2] for k, v in pos_datam.items()}
+    Pmag_datam,Pmask,Nmag_datam,Nmask=magnet_selection(pos_data)
+    Psim_mag_datam,Psim_mask,Nsim_mag_datam,Nsim_mask=magnet_selection(sim_pos_data)
+    Ptmass_mag=tmass_cut[Psim_mask]
+    Ntmass_mag=tmass_cut[Nsim_mask]
     magnet="pos_dipole" 
-    sim_fits(tmass,simdatam,pos_datam2,calibration_factor,magnet,50)
+    sim_fits(Ptmass_mag,Psim_mag_datam,Pmag_datam,calibration_factor,magnet,50)
     magnet="neg_dipole" 
-    sim_fits(tmass,simdatam,neg_datam2,calibration_factor,magnet,50)
+    sim_fits(Ntmass_mag,Nsim_mag_datam,Nmag_datam,calibration_factor,magnet,50)
 # can add  more here qutie easily 
 # this is splitting up agnles azimuthal of positive muon in detector
-
-    muP_thi=pos_datam["mup_phi"]
-    pos_mask2= muP_thi > 0
-    neg_mask2= muP_thi < 0
-    pos_datam2= {k: v[pos_mask2] for k  , v in pos_datam.items()}
-    neg_datam2= {k: v[neg_mask2] for k, v in pos_datam.items()}
-
+    Pmag_datam,Pmask,Nmag_datam,Nmask=Azimuthal_selection(pos_data)
+    Psim_mag_datam,Psim_mask,Nsim_mag_datam,Nsim_mask=Azimuthal_selection(sim_pos_data)
+    Ptmass_mag=tmass_cut[Psim_mask]
+    Ntmass_mag=tmass_cut[Nsim_mask]
     angle="0__π" 
-    sim_fits(tmass,simdatam,pos_datam2,calibration_factor,angle,50)
+    sim_fits(Ptmass_mag,Psim_mag_datam,Pmag_datam,calibration_factor,angle,50)
     angle="-0__π" 
-    sim_fits(tmass,simdatam,neg_datam2,calibration_factor,angle,50)
+    sim_fits(Ntmass_mag,Nsim_mag_datam,Nmag_datam,calibration_factor,angle,50)
 # splitting by transeverse muon momentum 
-    Dimuon_P=pos_datam["V_PT"]
-    #print(np.mean(Dimuon_P))
-    pos_mask2= Dimuon_P > 18.3
-    neg_mask2=Dimuon_P <= 18.3
-    pos_datam2= {k: v[pos_mask2] for k  , v in pos_datam.items()}
-    neg_datam2= {k: v[neg_mask2] for k, v in pos_datam.items()}
+
+    Pmag_datam,Pmask,Nmag_datam,Nmask=Azimuthal_selection(pos_data)
+    Psim_mag_datam,Psim_mask,Nsim_mag_datam,Nsim_mask=Azimuthal_selection(sim_pos_data)
+    Ptmass_mag=tmass_cut[Psim_mask]
+    Ntmass_mag=tmass_cut[Nsim_mask]
     dimuon="Higher_Pt"
-    sim_fits(tmass,simdatam,pos_datam2,calibration_factor,dimuon,50)
+    sim_fits(Ptmass_mag,Psim_mag_datam,Pmag_datam,calibration_factor,dimuon,50)
     dimuon="Lower_Pt"
-    sim_fits(tmass,simdatam,neg_datam2,calibration_factor,dimuon,50)
+    sim_fits(Ntmass_mag,Nsim_mag_datam,Nmag_datam,calibration_factor,dimuon,50)
 
 
 
 # this splitting happens earlier anyway but is used as a check and to see what indilvidual selection cuts do
 # splitting by individual transverse momenta-----more of a selection cut then a comaprison
-    pos_mask= (muon_pt_n > 20) & (muon_pt_p > 20)
-    pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
+    pos_data,mask=Pt_selection(datam)# data
+    sim_pos_data,sim_mask= Pt_selection(simdatam)
+    tmass3=tmass[sim_mask]
     seperate_Pt_selection="seperate_Pt_selection"
-    sim_fits(tmass,simdatam,pos_datam,calibration_factor,seperate_Pt_selection,50)
+    sim_fits(tmass3,sim_pos_data,pos_data,calibration_factor,seperate_Pt_selection,50)
 #splitting by individual pseudorapidity
-    pos_mask= (muon_eta_p < 4.4) & (muon_eta_n < 4.4) & (muon_eta_p > 2.2) & (muon_eta_n > 2.2)
-    pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
+    pos_data,mask= Pseudo_selection(datam)# data
+    sim_pos_data,sim_mask= Pseudo_selection(simdatam)
+    tmass3=tmass[sim_mask]
     psuedo="psuedo"
-    sim_fits(tmass,simdatam,pos_datam,calibration_factor,psuedo,50)
+    sim_fits(tmass3,sim_pos_data,pos_data,calibration_factor,psuedo,50)
 #splitting by both pseudorapidity and transverse momenta
-    pos_mask= (muon_eta_p < 4.4) & (muon_eta_n < 4.4) & (muon_eta_p > 2.2) & (muon_eta_n > 2.2) & (muon_pt_n > 20) & (muon_pt_p > 20)
-    pos_datam= {k: v[pos_mask] for k  , v in datam.items()}
+    pos_data,mask= base_selection(datam)# data
+    sim_pos_data,sim_mask= base_selection(simdatam)
+    tmass_cut=tmass[sim_mask]
     seperate_Pt_psuedo_selection="seperate_Pt_psuedo_selection"
-    sim_fits(tmass,simdatam,pos_datam,calibration_factor,seperate_Pt_psuedo_selection,50)
+    sim_fits(tmass_cut,sim_pos_data,pos_data,calibration_factor,seperate_Pt_psuedo_selection,50)
