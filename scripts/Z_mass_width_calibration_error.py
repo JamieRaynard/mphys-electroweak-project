@@ -33,9 +33,9 @@ with open("results_table.tex", "w") as f:
     f.write(r"\centering" + "\n")
     f.write(r"\begin{tabular}{l c c}" + "\n")
     f.write(r"\hline" + "\n")
-    f.write(r" & Mass & Width \\" + "\n")
+    f.write(r" & Mass / GeV & Width / GeV\\" + "\n")
     f.write(r"\hline" + "\n")
-    f.write(f"Calibration error & {Calibration_ratio_mass_error:.5f} & {Calibration_ratio_width_error:.5f} \\\\\n")
+    f.write(f"Momentum scaling error & {Calibration_ratio_mass_error:.5f} & {Calibration_ratio_width_error:.5f} \\\\\n")
     f.write(f"Smearing error & {smear_mass_error:.5f} & {smear_width_error:.5f} \\\\\n")
     f.write(r'$\Upsilon$(1S) mass error & 0.00100 & 0.00000 \\' + '\n')
     f.write(r"\hline" + "\n")
@@ -60,7 +60,7 @@ with open("mass_width_results_table.tex", "w") as f:
     f.write(r"\centering" + "\n")
     f.write(r"\begin{tabular}{l c c}" + "\n")
     f.write(r"\hline" + "\n")
-    f.write(r" & Mass & Width \\" + "\n")
+    f.write(r" & Mass / GeV & Width / GeV \\" + "\n")
     f.write(r"\hline" + "\n")
     f.write(f"Values & {mass:.5f} & {width:.5f} \\\\\n")
     f.write(f"Statistical error & {mass_error:.5f} & {width_error:.5f} \\\\\n")
@@ -78,8 +78,8 @@ with open("Final_results_table.tex", "w") as f:
     f.write(r"\hline" + "\n")
     f.write(r"Parameter & Value & \multicolumn{2}{c}{Correlation} \\" + "\n")
     f.write(r"\hline" + "\n")
-    f.write(f"$M_Z$ & {mass:.3f} $\\pm$ {mass_error:.3f} & 1.00 & {corelation:.3f} \\\\\n")
-    f.write(f"$\\Gamma_Z$ & {width:.3f} $\\pm$ {width_error:.3f} &  & 1.00 \\\\\n")
+    f.write(f"$M_Z$ / GeV & {mass:.3f} $\\pm$ {mass_error:.3f} & 1.00 & {corelation:.3f} \\\\\n")
+    f.write(f"$\\Gamma_Z$ / GeV & {width:.3f} $\\pm$ {width_error:.3f} &  & 1.00 \\\\\n")
     f.write(r"\hline" + "\n")
     f.write(r"\end{tabular}" + "\n")
     f.write(r"\caption{Measured values of $M_Z$ and $\Gamma_Z$ with their correlation matrix}" + "\n")
@@ -144,11 +144,11 @@ with open("dipole_table.tex", "w") as f:
     f.write(r"Measuremnt & Positive dipole & Negative dipole & Significance\\" + "\n")
     f.write(r"\hline" + "\n")
 
-    f.write(f"Mass [GeV] & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
+    f.write(f"Mass / GeV & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
             f"${massn:.5f} \pm {mass_errorn:.2f}$ & "
             f"${magnet_mass_significance1:.5f} $\\\\\n")
 
-    f.write(f"Width [GeV] & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
+    f.write(f"Width / GeV & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
             f"${widthn:.5f} \pm {width_errorn:.2f}$ & "
             f"${magnet_width_significance1:.5f} $ \\\\\n")
 
@@ -195,11 +195,11 @@ with open("Angle_table.tex", "w") as f:
     f.write(r"Measuremnt & angle range 0-$\pi$ & angle range-$\pi$-0 & Significance\\" + "\n")
     f.write(r"\hline" + "\n")
 
-    f.write(f"Mass [GeV] & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
+    f.write(f"Mass / GeV & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
             f"${massn:.5f} \pm {mass_errorn:.2f}$ & "
             f"${magnet_mass_significance2:.5f} $\\\\\n")
 
-    f.write(f"Width [GeV] & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
+    f.write(f"Width / GeV & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
             f"${widthn:.5f} \pm {width_errorn:.2f}$ & "
             f"${magnet_width_significance2:.5f} $ \\\\\n")
 
@@ -245,11 +245,11 @@ with open("Dimuon-transverse-P.tex", "w") as f:
     f.write(r"Measuremnt & 0-18.3 Gev & $>$ 18.3Gev  & Significance\\" + "\n")
     f.write(r"\hline" + "\n")
 
-    f.write(f"Mass [GeV] & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
+    f.write(f"Mass / GeV & ${massp:.5f} \pm {mass_errorp:.2f}$ & "
             f"${massn:.5f} \pm {mass_errorn:.2f}$ & "
             f"${magnet_mass_significance3:.5f} $\\\\\n")
 
-    f.write(f"Width [GeV] & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
+    f.write(f"Width / GeV & ${widthp:.5f} \pm {width_errorp:.2f}$ & "
             f"${widthn:.5f} \pm {width_errorn:.2f}$ & "
             f"${magnet_width_significance3:.5f} $ \\\\\n")
 
@@ -287,7 +287,7 @@ with open("Bins_table.tex", "w") as f:
     f.write(r"\centering" + "\n")
     f.write(r"\begin{tabular}{l c c}" + "\n")
     f.write(r"\hline" + "\n")
-    f.write(r" & Mass & Width \\" + "\n")
+    f.write(r" & Mass / GeV & Width / GeV \\" + "\n")
     f.write(r"\hline" + "\n")
     f.write(f"30 bins & {massp:.5f} $\pm$ {mass_errorp:.5f} & {widthp:.5f} $\pm$ {width_errorp:.5f} \\\\\n")
     f.write(f"50 bins & {mass:.5f} $\pm$ {mass_error:.5f} & {width:.5f} $\pm$ {width_error:.5f} \\\\\n")
@@ -335,10 +335,10 @@ with open("selection_table.tex", "w") as f:
     f.write(r"\centering" + "\n")
     f.write(r"\begin{tabular}{l c c c}" + "\n")  # 4 columns now
     f.write(r"\hline" + "\n")
-    f.write(r" & Transverse momentum & pseudorapidity & Both applied simultaneously \\" + "\n")
+    f.write(r" & Transverse momentum & pseudorapidity & No selection cut \\" + "\n")
     f.write(r"\hline" + "\n")
-    f.write(f"mass & {mass1:.5f} $\pm$ {mass_error1:.5f} & {mass2:.5f} $\pm$ {mass_error2:.5f} & {mass3:.5f} $\pm$ {mass_error3:.5f} \\\\\n")
-    f.write(f"width & {width1:.5f} $\pm$ {width_error1:.5f} & {width2:.5f} $\pm$ {width_error2:.5f} & {width3:.5f} $\pm$ {width_error3:.5f} \\\\\n")
+    f.write(f"mass / GeV & {mass1:.5f} $\pm$ {mass_error1:.5f} & {mass2:.5f} $\pm$ {mass_error2:.5f} & {mass3:.5f} $\pm$ {mass_error3:.5f} \\\\\n")
+    f.write(f"width / GeV & {width1:.5f} $\pm$ {width_error1:.5f} & {width2:.5f} $\pm$ {width_error2:.5f} & {width3:.5f} $\pm$ {width_error3:.5f} \\\\\n")
     f.write(f"$\chi^2$ & {chi21:.3f}  & {chi22:.3f} & {chi23:.3f} \\\\\n")
     f.write(f"$ndf$ & {ndf1:.3f}  & {ndf2:.3f} & {ndf3:.3f} \\\\\n")
     f.write(f"corelation & {corelation1:.3f}  & {corelation2:.3f} & {corelation3:.3f} \\\\\n")
@@ -355,8 +355,8 @@ with open("significance_table.tex", "w") as f:
     f.write(r"\hline" + "\n")
     f.write(r" & magnetic polarity & Dimuon $P_T$ & azimuthal angle \\" + "\n")
     f.write(r"\hline" + "\n")
-    f.write(f"Significance on the mass & {magnet_mass_significance1:.5f}  & {magnet_mass_significance3:.5f}  & {magnet_mass_significance2:.5f}  \\\\\n")
-    f.write(f"Significance on the width & {magnet_width_significance1:.5f}  & {magnet_width_significance3:.5f}  & {magnet_mass_significance2:.5f}  \\\\\n")
+    f.write(f"Significance on the Mass & {magnet_mass_significance1:.5f}  & {magnet_mass_significance3:.5f}  & {magnet_mass_significance2:.5f}  \\\\\n")
+    f.write(f"Significance on the Width & {magnet_width_significance1:.5f}  & {magnet_width_significance3:.5f}  & {magnet_mass_significance2:.5f}  \\\\\n")
     f.write(r"\hline" + "\n")
     f.write(r"\end{tabular}" + "\n")
     f.write(r"\caption{Significance values for three validation checks}" + "\n")

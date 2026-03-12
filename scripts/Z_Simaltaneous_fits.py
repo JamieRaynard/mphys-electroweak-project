@@ -125,24 +125,36 @@ def fiteq(x,a,b,m,w,scale):
 
 def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     c=calibration_factor #error in calibration
-    bin_space=np.linspace(80.0,100.0,bin_number)
+    bin_space=np.linspace(84.0,98.0,bin_number)
     dataHist,databinn,_d=plt.hist(conaeq(datam,None), bins=bin_space, histtype="step",label="Z-data-reconstructed",linewidth=1) #the data recosntuction data #for recosntructed simulation 
     trmassHist,binn,_t=plt.hist(tmass, bins=bin_space, histtype="step",label="Z-true",density=True,linewidth=1) #for true mass
     centers=0.5*(binn[1:]+binn[:-1])
     w=3
     m=91.1876
     fitParam,_tt = curve_fit(fiteq,centers,trmassHist,p0=[5,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,1]),maxfev=10000)# this uses the true mass
-
+    plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["Times New Roman", "Times", "STIX"],    # this is making the graphs look like PRL
+    "mathtext.fontset": "stix",
+    "font.size": 12,
+})
+    plt.rcParams.update({
+    "lines.linewidth": 1.2,
+    "lines.markersize": 4,
+    "axes.linewidth": 0.8,
+})
     plt.figure()#-------------------------true mass function graph
+    bin_space=np.linspace(70,110,100)
     trmassHist,binn,_t=plt.hist(tmass, bins=bin_space, histtype="step",label="Z-true",density=True,linewidth=1)
-    fitParam,_tt = curve_fit(fiteq,centers,trmassHist,p0=[5,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,1]),maxfev=10000)
-    x_fit = np.linspace(80, 100, 500)
+    centersee=0.5*(binn[1:]+binn[:-1])
+    fitParam,_tt = curve_fit(fiteq,centersee,trmassHist,p0=[5,-0.7,m,w,0.4],bounds=([0.0,-1.0,60,0,0],[100.0,0,120,10,1]),maxfev=10000)
+    x_fit = np.linspace(70, 110, 500)
     y_fit=fiteq(x_fit,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])
     plt.plot(x_fit,y_fit)
     plt.xlabel("Dimuon Mass / GeV")
     plt.ylabel("Normalised counts")
     plt.savefig(f"transient/True_mass_fit ({'real' if use_diagram==True else use_diagram}).pdf")
-
+    bin_space=np.linspace(84.0,98.0,bin_number)
     # i want 9 differnet parameters
 
     ratio905_1=fiteq(tmass,fitParam[0],fitParam[1],90.5,1,fitParam[4])/fiteq(tmass,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4])#ratio--
@@ -250,32 +262,6 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     print(covariance_matrix)
     print(f"corelation is {corelation_coefficient}")
     ndf=len(binnweights905_1)-2
-    chimin=np.min(chi_values)
-    print(chimin)
-    if fname != "dont_use":
-        with open(fname, "w") as f:
-            f.write(f"{mass_result}\n")
-            f.write(f"{width_result}")
-            if fname==f"mass-width_values_and_error.txt":
-                f.write(f"\n{mass_error}\n")
-                f.write(f"{width_error}\n")
-                f.write(f"{chimin}\n")
-                f.write(f"{ndf}\n")
-                f.write(f"{corelation_coefficient}")
-
-        f.close()
-
-    if use_diagram != True:
-        with open(use_diagram, "w") as f:
-            f.write(f"{mass_result}\n")
-            f.write(f"{width_result}")
-            f.write(f"\n{mass_error}\n")
-            f.write(f"{width_error}\n")
-            f.write(f"{chimin}\n")
-            f.write(f"{ndf}\n")
-            f.write(f"{corelation_coefficient}")
-
-
 
     # plotting the stack graph with similtanous fits
     #the top half.
@@ -365,10 +351,33 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     ax2.set_ylabel("Ratio/best fit")
     ax2.set_xlabel("Mass / GeV")
     ax2.set_ylim(bottom=0.85)
-    ax1.set_xlim(86, 96)
+    #ax1.set_xlim(86, 96)
     ax2.legend(loc='upper left',frameon=True, fontsize=8)
     plt.savefig(f"transient/Z-stack_similtaneous ({'real' if use_diagram==True else use_diagram}).pdf")
-                
+    chimin=np.sum(((dataHist-best_interpolate_template)**2)/dataHist)
+    if fname != "dont_use":
+        with open(fname, "w") as f:
+            f.write(f"{mass_result}\n")
+            f.write(f"{width_result}")
+            if fname==f"mass-width_values_and_error.txt":
+                f.write(f"\n{mass_error}\n")
+                f.write(f"{width_error}\n")
+                f.write(f"{chimin}\n")
+                f.write(f"{ndf}\n")
+                f.write(f"{corelation_coefficient}")
+
+        f.close()
+
+    if use_diagram != True:
+        with open(use_diagram, "w") as f:
+            f.write(f"{mass_result}\n")
+            f.write(f"{width_result}")
+            f.write(f"\n{mass_error}\n")
+            f.write(f"{width_error}\n")
+            f.write(f"{chimin}\n")
+            f.write(f"{ndf}\n")
+            f.write(f"{corelation_coefficient}")   
+            f.close()         
     print(chi_values)
 
     # graph elipse of mass width
@@ -439,11 +448,11 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     #lhcb
     Z_mass_lhcb=91.1857
     lhcb_E=0.0083
-    ax.axvline(Z_mass_lhcb, color='black',label="LHCb prior measurment")
+    ax.axvline(Z_mass_lhcb, color='black')
     ax.axvline(Z_mass_lhcb + lhcb_E, linestyle='--', color='black')
     ax.axvline(Z_mass_lhcb - lhcb_E, linestyle='--', color='black')
 
-    ax.axvspan(Z_mass_lhcb - lhcb_E, Z_mass_lhcb + lhcb_E, color='grey', alpha=0.3)
+    ax.axvspan(Z_mass_lhcb - lhcb_E, Z_mass_lhcb + lhcb_E, color='grey', alpha=0.3,label="LHCb prior measurement")
     #ax.fill_betweenx(y=ax.get_ylim(),x1=lhcb_E - lhcb_E,x2=lhcb_E + lhcb_E,alpha=0.3,color="grey")
 
     ax.legend(loc="upper left")
@@ -453,36 +462,40 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
 
     #---------------------mass graph only
     fig, ax = plt.subplots()
-    y=[5]
-    x=[mass_result]
-    x_er=[mass_error]
-    ax.errorbar(x, y, xerr=x_er , fmt='o', color='red', capsize=3,label="Our result")
-        
-    y=[7] 
-    x=[Z_mass_lhcb]
-    x_er=[lhcb_E]
-    ax.errorbar(x, y, xerr=x_er , fmt='o', color='black', capsize=3,label="Prior LHCb")
+    y=[9]   
     sm_theory_mass=91.2047
     sm_theory_massE=0.0088
-    y=[1]   
     x=[sm_theory_mass]
     x_er=[sm_theory_massE]
-    ax.errorbar(x, y, xerr=x_er , fmt='o', color='blue', capsize=3,label="Standard model prediction")
-    
-    y=[3]   
+    ax.errorbar(x, y, xerr=x_er , fmt='o', color='black', capsize=3)
+    ax.annotate("Standard model prediction",(x[0], y[0]),xytext=(0, 8),textcoords="offset points",ha='center')
+    y=[1]
+    x=[mass_result]
+    x_er=[mass_error]
+    ax.errorbar(x, y, xerr=x_er , fmt='o', color='red', capsize=3)
+    ax.annotate("Our result",(x[0], y[0]),xytext=(0, 8),textcoords="offset points",ha='center')    
+    y=[3] 
+    x=[Z_mass_lhcb]
+    x_er=[lhcb_E]
+    ax.errorbar(x, y, xerr=x_er , fmt='o', color='black', capsize=3)
+    ax.annotate("Prior LHCb",(x[0], y[0]),xytext=(0, 8),textcoords="offset points",ha='center')   
+    y=[5]   
     x=[theory_mass]
     x_er=[theory_massE]
-    ax.errorbar(x, y, xerr=x_er , fmt='o', color='green', capsize=3,label="LEP")
+    ax.errorbar(x, y, xerr=x_er , fmt='o', color='black', capsize=3)
+    ax.annotate("LEP",(x[0], y[0]),xytext=(0, 8),textcoords="offset points",ha='center')   
 
     Z_mass_CDF=91.1943
     CDF_E=0.0138
-    y=[9]   
+    y=[7]   
     x=[Z_mass_CDF]
     x_er=[CDF_E]
-    ax.errorbar(x, y, xerr=x_er , fmt='o', color='yellow', capsize=3,label="CDF")
-    ax.legend(loc="upper left")
+    ax.errorbar(x, y, xerr=x_er , fmt='o', color='black', capsize=3)
+    ax.annotate("CDF",(x[0], y[0]),xytext=(0, 8),textcoords="offset points",ha='center')   
     ax.set_xlabel("Mass / GeV")
     ax.set_yticks([])
+    ax.set_ylim(0, 10) 
+    ax.set_xlim(91.11, 91.23) 
     plt.savefig(f"transient/Z-mass ({'real' if use_diagram==True else use_diagram}).pdf")
     
 #selection cuts------------------------
@@ -599,9 +612,9 @@ if fname == f"mass-width_values_and_error.txt":
     tmass3=tmass[sim_mask]
     psuedo="psuedo"
     sim_fits(tmass3,sim_pos_data,pos_data,calibration_factor,psuedo,50)
-#splitting by both pseudorapidity and transverse momenta
-    pos_data,mask= base_selection(datam)# data
-    sim_pos_data,sim_mask= base_selection(simdatam)
-    tmass_cut=tmass[sim_mask]
+#no splitting at all
+    #pos_data,mask= base_selection(datam)# data
+    #sim_pos_data,sim_mask= base_selection(simdatam)
+    #tmass_cut=tmass[sim_mask]
     seperate_Pt_psuedo_selection="seperate_Pt_psuedo_selection"
-    sim_fits(tmass_cut,sim_pos_data,pos_data,calibration_factor,seperate_Pt_psuedo_selection,50)
+    sim_fits(tmass,simdatam,datam,calibration_factor,seperate_Pt_psuedo_selection,50)
