@@ -87,8 +87,19 @@ def Reconstruct(mup_P,mum_P,mup_E,mum_E):
 
 #loc and smear are just variables to determine the file name the graph will be saved under
 def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
+    plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["Times New Roman", "Times", "STIX"],    # this is making the graphs look like PRL
+    "mathtext.fontset": "stix",
+    "font.size": 12,
+    })
+    plt.rcParams.update({
+    "lines.linewidth": 1.2,
+    "lines.markersize": 4,
+    "axes.linewidth": 0.8,
+    })
     plt.figure()
-    massHist,bins = np.histogram(mass,bins=100,range=(9.15,9.75))
+    massHist,bins = np.histogram(mass,bins=70,range=(9.15,9.75))
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -100,7 +111,7 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     
     #Crystal Ball fit:
     p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,N_tot,N_tot/2,0.5,0.5*N_tot,0.3]
-    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0, -1e-2, -10], [5.0, 10.0, 9.50, 0.10,  N_tot, N_tot, 5, 10*N_tot, 10])
+    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0, -1e-2, -10], [5.0, 10.0, 9.50, 0.10, N_tot, N_tot, 1e3, 10*N_tot, 10])
     if sim:
         fitfunc = CrystalBallFitNoBg
         p0 = [1.35259258,3.40023716,9.45816238,4.00892327e-02,0.8*N_tot,0.5*N_tot,0.1,0.0,0.0]
@@ -126,7 +137,7 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     plt.ylabel("Counts")
     plt.ylim(bottom=0)
     #plt.title(f"Reconstructed Upsilon {filename}")
-    plt.savefig(f"transient/Upsilon_mass_{filename}.png")
+    plt.savefig(f"transient/Upsilon_mass_{filename}.pdf")
     plt.clf()
 
     if Output == "test":
@@ -145,6 +156,20 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
         return (outputvalues)
     else:
         return 0
+    
+def Width68(mass, mass_center, background_params=None):
+    hist, bins = np.histogram(mass, bins=100, range=(9.15, 9.75))
+    binwidth = bins[1] - bins[0]
+    bincenters = bins[:-1] + 0.5*binwidth
+    if background_params is not None:
+        A, B = background_params
+        background = (A + B*bincenters)
+        hist = np.maximum(hist - background, 0)
+    dists = np.abs(bincenters - mass_center)
+    order = np.argsort(dists)
+    cumulative = np.cumsum(hist[order]) / np.sum(hist)
+    idx_68 = np.searchsorted(cumulative, 0.68)
+    return dists[order[idx_68]]
 
 def EffectiveWidth(N,scale,F,Z):
     f_1 = N/(N+F)
@@ -171,7 +196,8 @@ def CalcBackground(sim_massHist,data_massHist,bincenters,x0):
     return result.x[0] + result.x[1]*bincenters
 
 def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
-    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.15,9.75))
+    compar_bins = 60
+    data_massHist, bins = np.histogram(data_mass, bins=compar_bins, range=(9.15,9.75))
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -180,8 +206,8 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
 
     fitParam = PlotHistogram(data_mass,'DATA_fit',Output=True)
     background = (fitParam["A"][0]+float(fitParam["B"][0])*bincenters)
-    unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.15,9.75)))
-    scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.15,9.75)))
+    unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=compar_bins, range=(9.15,9.75)))
+    scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = compar_bins, range = (9.15,9.75)))
 
     data_massHist_noBG = data_massHist - background
     data_massHist_noBG[data_massHist_noBG < 0.0] = 0.0
@@ -198,12 +224,25 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     unscaled_sim_massHist = unscaled_sim_massHist * (np.sum(data_massHist)/np.sum(unscaled_sim_massHist))
     scaled_sim_massHist = scaled_sim_massHist * (np.sum(data_massHist)/np.sum(scaled_sim_massHist))
 
+    plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["Times New Roman", "Times", "STIX"],    # this is making the graphs look like PRL
+    "mathtext.fontset": "stix",
+    "font.size": 12,
+    })
+    plt.rcParams.update({
+    "lines.linewidth": 1.2,
+    "lines.markersize": 4,
+    "axes.linewidth": 0.8,
+    })
+
+    plt.figure()
     plt.plot(bincenters,unscaled_background,color="blue",linestyle="--",zorder=1)
     plt.plot(bincenters,scaled_background,color="orange",linestyle="--",zorder=1)
     #plt.bar(bincenters, background, width=binwidth, label="Background", color="lightgray", align="center")
     plt.step(bincenters, unscaled_sim_massHist,where="mid",label="Sim without smearing",color="blue",zorder=2)
     plt.step(bincenters, scaled_sim_massHist, where="mid", label="Sim with smearing",color="orange",zorder=2)
-    plt.scatter(bincenters, data_massHist, label = "Data", s=2 ,c='black',zorder=3)
+    plt.scatter(bincenters, data_massHist, label = "Data", s=3 ,c='black',zorder=3)
     plt.errorbar(bincenters, data_massHist, yerr=np.sqrt(data_massHist),fmt='none')
 
     plt.legend()
@@ -211,7 +250,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     plt.ylabel("Counts")
     plt.ylim(bottom=0)
     #plt.title(r"Comparing the effect of momentum smearing")
-    plt.savefig(f"transient/Upsilon_mass_comparisson.png")
+    plt.savefig(f"transient/Upsilon_mass_comparisson.pdf")
     plt.clf()
 
     return 0
@@ -221,7 +260,7 @@ def Comparing(sim_branches,data_branches):
         with open("Calibration_output.json",) as InputFile:
             Calibration = load(InputFile)
         c_rat = Calibration["C_ratio"][0]#*0.1
-        Smear_factor = Calibration["Smear_factor"][0]#*25
+        Smear_factor = Calibration["Smear_factor"][0]#*2.5
     except FileNotFoundError:
         print('Please run the script with --FullOutput="TRUE" first to get calibration information')
         return 1
@@ -285,7 +324,16 @@ def CalcSmearFactor(sim_branches,data_branches,model='Naive',calibration=1):
     if model !='Naive':
         mup_P_mag = np.sqrt(mup_P_sim[0]**2+mup_P_sim[1]**2+mup_P_sim[2]**2)
         mum_P_mag = np.sqrt(mum_P_sim[0]**2+mum_P_sim[1]**2+mum_P_sim[2]**2)
-        p_scale = np.mean([mup_P_mag,mum_P_mag])#,mup_P_dat,mum_P_dat])
+        muon_momenta = np.concatenate([mup_P_mag,mum_P_mag])
+        counts,bin_edges,_ = plt.hist(muon_momenta,bins=300,range=(20,400))
+        mode_p = bin_edges[np.argmax(counts)] + (bin_edges[1] - bin_edges[0]) / 2
+        plt.title("Upsilon muon momenta")
+        plt.xlabel("p / GeV")
+        plt.savefig("transient/muon_momenta.pdf")
+        plt.clf()
+        p_scale = np.median(muon_momenta) #Median
+        #p_scale = mode_p #Mode
+        print(f'Typical momentum: {p_scale}')
     else:
         p_scale = 1
     
@@ -298,6 +346,12 @@ def CalcSmearFactor(sim_branches,data_branches,model='Naive',calibration=1):
     err_sigma = np.sqrt(err_due_sim_width**2+err_due_sim_mass**2+err_due_data_width**2+err_due_data_mass**2)
     # sigma = sigma*p_scale #GET RID OF ME
     # err_sigma = err_sigma*p_scale
+    sim_width = Width68(sim_mass, sim_results["mass"][0])
+    data_width = Width68(data_mass, data_results["mass"][0], background_params=(data_results["A"][0], data_results["B"][0]))
+    sigma = SmearFactor(sim_width, sim_results["mass"][0], data_width, data_results["mass"][0], p_scale)
+    err_sim = SmearFactor(sim_width, sim_results["mass"][0]+sim_results["mass"][1], data_width, data_results["mass"][0], p_scale)
+    err_dat = SmearFactor(sim_width, sim_results["mass"][0], data_width, data_results["mass"][0]+data_results["mass"][1], p_scale)
+    err_sigma = np.sqrt(err_sim**2+err_dat**2)
     return (sigma,err_sigma)
 
 
@@ -347,7 +401,7 @@ def main():
     if (((args.Smearing).lower() == "on"  or (args.Smearing).lower() == "true") and loc == "U1S") or (args.FullOutput).lower() == "true":
         print("Calculating smear factor...")
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
-        sigma,sigma_err = CalcSmearFactor(sim_branches,data_branches,model='complex',calibration=c)
+        sigma,sigma_err = CalcSmearFactor(sim_branches,data_branches,model='complex')
         print(f'WOOO got a smearing variable: {sigma} ± {sigma_err}')
         output["Smear_factor"] = (sigma,sigma_err)
 
