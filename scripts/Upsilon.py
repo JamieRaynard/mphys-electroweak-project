@@ -100,7 +100,7 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     
     #Crystal Ball fit:
     p0 = [1.19698532e+00,1.33208227e+00,9.45914418e+00,4.94449266e-02,N_tot,N_tot/2,0.5,0.5*N_tot,0.3]
-    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0, -1e-2, -10], [5.0, 10.0, 9.50, 0.10,  N_tot, N_tot, 5, 10*N_tot, 10])
+    bounds = ([0.5, 1.0, 9.40, 0.005, 0.0, 0.0, 0.0, -1e-2, -10], [5.0, 10.0, 9.50, 0.10, N_tot, N_tot, 1e3, 10*N_tot, 10])
     if sim:
         fitfunc = CrystalBallFitNoBg
         p0 = [1.35259258,3.40023716,9.45816238,4.00892327e-02,0.8*N_tot,0.5*N_tot,0.1,0.0,0.0]
@@ -126,7 +126,7 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     plt.ylabel("Counts")
     plt.ylim(bottom=0)
     #plt.title(f"Reconstructed Upsilon {filename}")
-    plt.savefig(f"transient/Upsilon_mass_{filename}.png")
+    plt.savefig(f"transient/Upsilon_mass_{filename}.pdf")
     plt.clf()
 
     if Output == "test":
@@ -211,7 +211,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     plt.ylabel("Counts")
     plt.ylim(bottom=0)
     #plt.title(r"Comparing the effect of momentum smearing")
-    plt.savefig(f"transient/Upsilon_mass_comparisson.png")
+    plt.savefig(f"transient/Upsilon_mass_comparisson.pdf")
     plt.clf()
 
     return 0
@@ -347,7 +347,7 @@ def main():
     if (((args.Smearing).lower() == "on"  or (args.Smearing).lower() == "true") and loc == "U1S") or (args.FullOutput).lower() == "true":
         print("Calculating smear factor...")
         #This applies a Gaussian smearing to the simulated momenta to try to make them more like the real data
-        sigma,sigma_err = CalcSmearFactor(sim_branches,data_branches,model='complex',calibration=c)
+        sigma,sigma_err = CalcSmearFactor(sim_branches,data_branches,model='complex')
         print(f'WOOO got a smearing variable: {sigma} ± {sigma_err}')
         output["Smear_factor"] = (sigma,sigma_err)
 
