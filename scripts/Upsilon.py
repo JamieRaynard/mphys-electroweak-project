@@ -171,7 +171,7 @@ def CalcBackground(sim_massHist,data_massHist,bincenters,x0):
     return result.x[0] + result.x[1]*bincenters
 
 def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
-    data_massHist, bins = np.histogram(data_mass, bins=100, range=(9.15,9.75))
+    data_massHist, bins = np.histogram(data_mass, bins=75, range=(9.15,9.75))
     binwidth = bins[1] - bins[0]
     binlist = [bins[0]+0.5*binwidth]
     for i in range(1,(len(bins)-1)):
@@ -180,8 +180,8 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
 
     fitParam = PlotHistogram(data_mass,'DATA_fit',Output=True)
     background = (fitParam["A"][0]+float(fitParam["B"][0])*bincenters)
-    unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=100, range=(9.15,9.75)))
-    scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 100, range = (9.15,9.75)))
+    unscaled_sim_massHist,bins = (np.histogram(unscaled_sim_mass, bins=75, range=(9.15,9.75)))
+    scaled_sim_massHist,bins = (np.histogram(scaled_sim_mass, bins = 75, range = (9.15,9.75)))
 
     data_massHist_noBG = data_massHist - background
     data_massHist_noBG[data_massHist_noBG < 0.0] = 0.0
@@ -221,7 +221,7 @@ def Comparing(sim_branches,data_branches):
         with open("Calibration_output.json",) as InputFile:
             Calibration = load(InputFile)
         c_rat = Calibration["C_ratio"][0]#*0.1
-        Smear_factor = Calibration["Smear_factor"][0]#*25
+        Smear_factor = Calibration["Smear_factor"][0]*2.5
     except FileNotFoundError:
         print('Please run the script with --FullOutput="TRUE" first to get calibration information')
         return 1
