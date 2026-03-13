@@ -349,9 +349,9 @@ def CalcSmearFactor(sim_branches,data_branches,model='Naive',calibration=1):
     sim_width = Width68(sim_mass, sim_results["mass"][0])
     data_width = Width68(data_mass, data_results["mass"][0], background_params=(data_results["A"][0], data_results["B"][0]))
     sigma = SmearFactor(sim_width, sim_results["mass"][0], data_width, data_results["mass"][0], p_scale)
-    err_sim = SmearFactor(sim_width, sim_results["mass"][0]+sim_results["mass"][1], data_width, data_results["mass"][0], p_scale)
-    err_dat = SmearFactor(sim_width, sim_results["mass"][0], data_width, data_results["mass"][0]+data_results["mass"][1], p_scale)
-    err_sigma = np.sqrt(err_sim**2+err_dat**2)
+    #err_sim = SmearFactor(sim_width, sim_results["mass"][0]+sim_results["mass"][1], data_width, data_results["mass"][0], p_scale)
+    #err_dat = SmearFactor(sim_width, sim_results["mass"][0], data_width, data_results["mass"][0]+data_results["mass"][1], p_scale)
+    #err_sigma = np.sqrt(err_sim**2+err_dat**2)
     return (sigma,err_sigma)
 
 
