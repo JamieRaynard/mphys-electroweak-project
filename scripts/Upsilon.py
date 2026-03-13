@@ -243,7 +243,7 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     plt.step(bincenters, unscaled_sim_massHist,where="mid",label="Uncalibrated sim",color="blue",zorder=2)
     plt.step(bincenters, scaled_sim_massHist, where="mid", label="Calibrated sim",color="orange",zorder=2)
     plt.scatter(bincenters, data_massHist, label = "Data", s=4 ,c='black',zorder=3)
-    plt.errorbar(bincenters, data_massHist, yerr=np.sqrt(data_massHist),fmt='none')
+    plt.errorbar(bincenters, data_massHist, yerr=np.sqrt(data_massHist),fmt='none',color="black")
 
     plt.legend()
     plt.xlabel("Mass / GeV")
