@@ -495,7 +495,7 @@ def sim_fits(tmass,simdatam,datam,calibration_factor,use_diagram,bin_number):
     ax.set_xlabel("Mass / GeV")
     ax.set_yticks([])
     ax.set_ylim(0, 10) 
-    ax.set_xlim(91.11, 91.23) 
+    ax.set_xlim(91.105, 91.23) 
     plt.savefig(f"transient/Z-mass ({'real' if use_diagram==True else use_diagram}).pdf")
     
 #selection cuts------------------------

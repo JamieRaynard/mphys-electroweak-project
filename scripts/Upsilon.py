@@ -124,11 +124,11 @@ def PlotHistogram(mass,filename,Output=None,sim=False,test=False,test_p0=None):
     # model = CrystalBallFitNoBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],binwidth)
     # plt.plot(bincenters,model,label="Crystall Ball function")
     beta,m,loc,scale,N,F,Z,A,B = fitParam
-    plt.plot(bincenters,CrystalBallFitNoBg(bincenters,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=binwidth),label="Crystal Ball Functions", color="red")
+    plt.plot(bincenters,CrystalBallFitNoBg(bincenters,beta,m,loc,scale,N,F,Z,A=0,B=0,binwidth=binwidth),label="Signal", color="red")
     if not sim:
-        plt.plot(bincenters,(fitParam[7]+fitParam[8]*bincenters)*binwidth,label="background",color="blue")
+        plt.plot(bincenters,(fitParam[7]+fitParam[8]*bincenters)*binwidth,label="Background",color="blue")
         combined_model = CrystalBallFitBg(bincenters,fitParam[0],fitParam[1],fitParam[2],fitParam[3],fitParam[4],fitParam[5],fitParam[6],fitParam[7],fitParam[8],binwidth)
-        plt.plot(bincenters,combined_model,label="combined",color="purple")
+        plt.plot(bincenters,combined_model,label="Combined",color="purple")
     
     #print(f'Saving plot to transient/Upsilon_mass_{filename}.pdf')
 
@@ -240,10 +240,10 @@ def CompareHistograms(data_mass,unscaled_sim_mass,scaled_sim_mass):
     plt.plot(bincenters,unscaled_background,color="blue",linestyle="--",zorder=1)
     plt.plot(bincenters,scaled_background,color="orange",linestyle="--",zorder=1)
     #plt.bar(bincenters, background, width=binwidth, label="Background", color="lightgray", align="center")
-    plt.step(bincenters, unscaled_sim_massHist,where="mid",label="Sim without smearing",color="blue",zorder=2)
-    plt.step(bincenters, scaled_sim_massHist, where="mid", label="Sim with smearing",color="orange",zorder=2)
-    plt.scatter(bincenters, data_massHist, label = "Data", s=3 ,c='black',zorder=3)
-    plt.errorbar(bincenters, data_massHist, yerr=np.sqrt(data_massHist),fmt='none')
+    plt.step(bincenters, unscaled_sim_massHist,where="mid",label="Uncalibrated sim",color="blue",zorder=2)
+    plt.step(bincenters, scaled_sim_massHist, where="mid", label="Calibrated sim",color="orange",zorder=2)
+    plt.scatter(bincenters, data_massHist, label = "Data", s=4 ,c='black',zorder=3)
+    plt.errorbar(bincenters, data_massHist, yerr=np.sqrt(data_massHist),fmt='none',color="black")
 
     plt.legend()
     plt.xlabel("Mass / GeV")
@@ -349,9 +349,9 @@ def CalcSmearFactor(sim_branches,data_branches,model='Naive',calibration=1):
     sim_width = Width68(sim_mass, sim_results["mass"][0])
     data_width = Width68(data_mass, data_results["mass"][0], background_params=(data_results["A"][0], data_results["B"][0]))
     sigma = SmearFactor(sim_width, sim_results["mass"][0], data_width, data_results["mass"][0], p_scale)
-    err_sim = SmearFactor(sim_width, sim_results["mass"][0]+sim_results["mass"][1], data_width, data_results["mass"][0], p_scale)
-    err_dat = SmearFactor(sim_width, sim_results["mass"][0], data_width, data_results["mass"][0]+data_results["mass"][1], p_scale)
-    err_sigma = np.sqrt(err_sim**2+err_dat**2)
+    #err_sim = SmearFactor(sim_width, sim_results["mass"][0]+sim_results["mass"][1], data_width, data_results["mass"][0], p_scale)
+    #err_dat = SmearFactor(sim_width, sim_results["mass"][0], data_width, data_results["mass"][0]+data_results["mass"][1], p_scale)
+    #err_sigma = np.sqrt(err_sim**2+err_dat**2)
     return (sigma,err_sigma)
 
 
